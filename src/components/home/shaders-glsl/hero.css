@@ -1,0 +1,22 @@
+.cinema-hero-fallback { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 60% 24%, #c21e5626, transparent 48%), radial-gradient(ellipse at 25% 35%, #6040b51c, transparent 40%), #171717; }
+.cinema-home[data-hero-ready='true'] .cinema-hero-fallback { display: none; }
+.hero-shader-tools { position: absolute; z-index: 8; top: 180px; right: var(--home-gutter); width: min(340px, calc(100% - 48px)); display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+.hero-shader-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; padding: 10px 16px; border: 1px solid rgb(255 255 255 / 20%); border-radius: 30px; background: rgb(12 10 17 / 85%); color: var(--home-paper); font-size: 12px !important; }
+.hero-shader-panel { width: 100%; max-height: calc(100svh - 255px); overflow-y: auto; padding: 20px; border: 1px solid rgb(255 255 255 / 18%); border-radius: 16px; background: rgb(12 10 17 / 96%); color: #faf9f6; box-shadow: 0 16px 50px rgb(0 0 0 / 35%); backdrop-filter: blur(12px); }
+.hero-shader-panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 16px; }
+.cinema-home .hero-shader-panel h2 { font-size: 28px; font-weight: 400; letter-spacing: .015em; }
+.hero-shader-panel-heading button { min-width: 44px; min-height: 44px; border: 0; background: transparent; color: inherit; display: grid; place-items: center; }
+.hero-shader-panel fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.hero-shader-panel fieldset:disabled { opacity: .45; }
+.hero-shader-select, .hero-shader-slider label { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; }
+.hero-shader-select { flex-direction: column; align-items: stretch; }
+.hero-shader-select select { width: 100%; min-height: 44px; padding: 10px; border: 1px solid #47404d; border-radius: 6px; background: #17131c; color: #faf9f6; font-size: 12px; }
+.hero-shader-slider { margin-top: 18px; }
+.hero-shader-slider output { color: #dba4f4; font-variant-numeric: tabular-nums; }
+.hero-shader-slider input { display: block; width: 100%; height: 34px; margin: 4px 0 0; accent-color: #d478f0; cursor: pointer; }
+.hero-shader-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+.hero-shader-actions button, .hero-shader-copy-toggle { min-height: 44px; padding: 9px 10px; border: 1px solid #47404d; border-radius: 6px; background: #211926; color: #faf9f6; font-size: 11px !important; }
+.hero-shader-actions button:last-child { grid-column: 1 / -1; }
+.hero-shader-copy-toggle { margin-top: 12px; width: 100%; background: transparent; }
+.hero-shader-notice { font-size: 12px; line-height: 1.6; margin-bottom: 16px !important; color: #bcb2c4; }
+@media(max-width:600px) { .hero-shader-tools { top: 205px; right: 24px; } .hero-shader-panel { max-height: calc(100svh - 280px); } }

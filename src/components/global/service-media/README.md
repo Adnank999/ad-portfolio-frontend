@@ -1,0 +1,1 @@
+`ServiceMedia` displays an uploaded service image or a video with native controls, an accessible description and an optional poster/caption. The existing artwork is the fallback for empty media slots. Media is never autoplayed.

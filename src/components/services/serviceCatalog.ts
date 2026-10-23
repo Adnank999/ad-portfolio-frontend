@@ -1,0 +1,15 @@
+export const serviceCatalog = [
+  { slug: "web-development", name: "Web Development", description: "Websites and portals that connect visitors to enquiries, bookings, and purchases." },
+  { slug: "nearshore-software-development", name: "Nearshore Software Development", description: "Direct remote development support for a defined part of your product backlog." },
+  { slug: "custom-software-development", name: "Custom Software Development", description: "Products and internal tools built around your users, rules, and workflows." },
+  { slug: "legacy-modernization", name: "Legacy Modernization", description: "Focused upgrades and staged improvements to the application you already rely on." },
+  { slug: "cloud-migration", name: "Cloud Migration", description: "Application and data moves with rehearsed cutover, recovery, and operating plans." },
+  { slug: "data-analytics", name: "Data & Analytics", description: "Connected data, agreed metric definitions, and reporting built around a decision." },
+  { slug: "ai-automation", name: "AI Automation", description: "Document and workflow automation with validated output and clear review controls." },
+  { slug: "digital-transformation", name: "Digital Transformation", description: "A practical path from operational bottlenecks to implemented improvements." },
+  { slug: "erp-implementation", name: "ERP Implementation", description: "Workflow planning, data migration, and integrations for a scoped ERP rollout." },
+  { slug: "crm-implementation", name: "CRM Implementation", description: "Clear customer pipelines, usable records, and connected enquiry handoffs." },
+  { slug: "seo", name: "SEO", description: "Technical search reviews and verified fixes for the pages that matter most." },
+  { slug: "geo-aeo", name: "GEO / AEO", description: "Specific, supported answers that make your services and expertise easier to understand." },
+  { slug: "paid-media", name: "Paid Media", description: "Campaign landing pages, reliable lead delivery, and defined conversion measurement." },
+] as const;

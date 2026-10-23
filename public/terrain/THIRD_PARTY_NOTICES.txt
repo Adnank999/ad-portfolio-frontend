@@ -1,0 +1,30 @@
+Dragon model
+
+"Demon Dragon Full Texture" by endlessvoidmc
+https://sketchfab.com/endlessvoidmc
+https://sketchfab.com/3d-models/demon-dragon-full-texture-19035a72cdcb4abfa2c161de32823e6b
+License identified by the supplied GLB metadata: Creative Commons Attribution 4.0.
+https://creativecommons.org/licenses/by/4.0/
+
+The supplied GLB is unmodified. This prototype creates two runtime skeleton clones,
+adjusts material tint/roughness, plays the supplied flying animation, adds a jaw
+pose and mouth sockets, and places the dragons on procedural flight paths.
+Fire, ice, terrain-contact effects and particle shaders are prototype additions.
+
+Draco decoder
+
+The unmodified glTF-targeted draco_decoder.wasm and draco_wasm_wrapper.js are
+copied from the installed Three.js 0.170.0 examples distribution.
+Draco is a Google open-source project distributed under Apache License 2.0.
+https://github.com/google/draco
+The license is included at vendor/draco/LICENSE.txt.
+
+User-supplied audio
+
+kaer-morhen.mp3 was supplied as "16. Kaer Morhen.mp3".
+portal-jump.mp3 was supplied as
+"dragon-studio-sci-fi-portal-jump-05-416165.mp3".
+Deep_rolling_thunder.mp3 is the user-supplied thunder recording, played unchanged
+in pitch with a short edge fade and adjustable runtime gain.
+No redistribution or public-performance rights are granted by this prototype.
+Confirm the applicable audio permissions before publishing.

@@ -1,0 +1,64 @@
+{
+  "resolution": 257,
+  "size": 340,
+  "waterLevel": 1.2,
+  "terrainTriangles": 131072,
+  "treeSourceVertices": 7561,
+  "treeSourcePolygons": 4799,
+  "convertedMaps": {
+    "rock-nor_gl": [
+      1024,
+      1024,
+      3
+    ],
+    "rock-rough": [
+      1024,
+      1024,
+      1
+    ],
+    "forest_ground-nor_gl": [
+      1024,
+      1024,
+      3
+    ],
+    "forest_ground-rough": [
+      1024,
+      1024,
+      1
+    ]
+  },
+  "textureSources": {
+    "rock": "dark_rock",
+    "forest_ground": "rocky_terrain_02"
+  },
+  "regionResolution": 385,
+  "formation": "volcanic-island",
+  "volcanoCenter": [
+    0,
+    10
+  ],
+  "craterRadius": 9,
+  "surroundingLandform": "connected-crescent",
+  "lagoonOpeningAngle": -2.27,
+  "volcanoBridge": false,
+  "projectAnchors": {
+    "multiversus": {
+      "x": -79.0,
+      "z": -10.000000000000009
+    },
+    "signal": {
+      "x": 34.55158092682003,
+      "z": 64.09610441211161
+    },
+    "prism": {
+      "x": 80.9937480062216,
+      "z": -17.086034767019797
+    },
+    "aura": {
+      "x": -50.25372806394452,
+      "z": -69.89006096145835
+    }
+  },
+  "runtimeBytes": 5362834,
+  "treeTextureBytes": 140718
+}

@@ -1,0 +1,45 @@
+.about-scale { position: relative; height: 400svh; border-top: 1px solid #242424; scroll-margin-top: 90px; }
+.about-scale-sticky { position: sticky; top: 90px; height: calc(100svh - 90px); min-height: 620px; display: flex; align-items: center; isolation: isolate; overflow: hidden; }
+.about-scale-layout { width: 100%; display: grid; grid-template-columns: 40% 60%; align-items: center; gap: 0; position: relative; z-index: 1; }
+.about-scale-copy { padding-right: 35px; }
+.about-story .about-scale-copy h2 { font: 400 10px/1.6 var(--font-heading); letter-spacing: .2em; text-transform: uppercase; color: #aaa; }
+.about-scale-counter { display: block; font-family: var(--font-heading); font-size: clamp(110px, 12vw, 190px); font-weight: 400; letter-spacing: .015em; line-height: .95; font-variant-numeric: tabular-nums; margin-block: 8px 12px; white-space: nowrap; }
+.about-scale-demo { letter-spacing: .08em; font-size: 8px; color: #aaa; }
+.about-scale-stage { font: 11px/1.6 var(--font-sans); letter-spacing: .16em; text-transform: uppercase; margin-top: 22px; }
+.about-scale-stage span { margin-right: 5px; }
+.about-scale-stage-text { font-size: 16px; color: #bbb; line-height: 1.6; margin-top: 20px; min-height: 52px; max-width: 330px; }
+.about-scale-context { font-size: 11px; line-height: 1.8; color: #a0a09e; padding-top: 22px; border-top: 1px solid #333; margin-top: 24px; max-width: 380px; }
+.about-scale-philosophy { font-size: 11px; line-height: 1.8; color: #a0a09e; margin-top: 14px; max-width: 380px; }
+.about-scale-graph { width: 100%; min-width: 0; }
+.about-scale-graph svg { display: block; width: 100%; max-height: calc(100svh - 140px); color: #f3f3f0; overflow: visible; }
+.about-scale-graph text { font: 14px var(--font-sans); letter-spacing: .04em; fill: currentColor; }
+.about-scale-graph .about-scale-layer-label { font-size: 10px; letter-spacing: .16em; fill: #aaa; }
+.about-scale-node { fill: #050505; stroke: #eee; stroke-width: 1.3; }
+.about-scale-node-halo { fill: none; stroke: #aaa; stroke-width: 1.4; filter: drop-shadow(0 0 5px #eee); }
+.about-scale-wire-base { fill: none; stroke: #292929; stroke-width: 1; }
+.about-scale-wire { fill: none; stroke: #ccc; stroke-width: 1.2; }
+.about-scale-graph-caption { color: #999; font: 8px/1.6 var(--font-sans); letter-spacing: .12em; text-transform: uppercase; margin: 16px 0 0; text-align: right; }
+.about-scale-matrix { position: absolute; inset: 15% -10%; display: flex; justify-content: space-around; gap: 25px; opacity: .11; transform: perspective(600px) rotateX(37deg); mask-image: radial-gradient(ellipse, black 15%, transparent 65%); z-index: -1; pointer-events: none; }
+.about-scale-matrix span { width: 12px; word-break: break-all; font: 14px/2.5 var(--font-sans); color: #777; }
+.about-scale-progress { position: absolute; bottom: 0; height: 1px; background: #777; width: 100%; transform-origin: left; }
+.about-scale-screen-reader { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@media (max-width: 800px) {
+  .about-scale { height: 320svh; }
+  .about-scale-sticky { min-height: 620px; }
+  .about-scale-layout { grid-template-columns: 1fr; gap: 24px; }
+  .about-scale-copy { padding: 0; display: grid; grid-template-columns: 1fr 1fr; column-gap: 20px; align-items: end; }
+  .about-scale-copy h2 { grid-column: 1 / -1; }
+  .about-scale-counter { font-size: 100px; margin: 10px 0; }
+  .about-scale-copy > .about-label { grid-column: 1; grid-row: 3; font-size: 8px; }
+  .about-scale-stage { grid-column: 2; grid-row: 2; align-self: start; margin-top: 22px; }
+  .about-scale-stage-text { grid-column: 2; grid-row: 2 / 4; align-self: end; font-size: 13px; min-height: 0; margin-bottom: 0; }
+  .about-scale-context { grid-column: 1 / -1; padding-top: 12px; margin-top: 12px; max-width: none; font-size: 10px; }
+  .about-scale-philosophy { display: none; }
+  .about-scale-graph { max-width: 650px; margin-inline: auto; }
+  .about-scale-graph svg { max-height: 40svh; }
+  .about-scale-graph-caption { font-size: 7px; margin-top: 8px; }
+}
+@media (max-width: 400px) { .about-scale-counter { font-size: 80px; } .about-scale-demo { display: block; margin-top: 4px; } .about-scale-layout { gap: 20px; } }
+@media (max-height: 700px) { .about-scale-sticky { min-height: 0; } .about-scale-philosophy { display: none; } .about-scale-counter { font-size: 100px; } }
+@media (max-height: 580px) and (max-width: 800px) { .about-scale { height: auto; } .about-scale-sticky { position: relative; top: 0; height: auto; padding-block: 50px; } .about-scale-graph svg { max-height: none; } }
+@media (prefers-reduced-motion: reduce) { .about-scale { height: auto; } .about-scale-sticky { position: relative; top: 0; height: auto; min-height: 0; padding-block: 80px; } }

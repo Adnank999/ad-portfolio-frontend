@@ -1,0 +1,44 @@
+.page-not-found {
+  min-height: 85svh;
+  display: grid;
+  place-items: center;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 150px 24px 90px;
+  background: #080808;
+  color: #f5f1f2;
+  text-align: center;
+}
+.page-not-found::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(ellipse at 50% 42%, #c21e5618, transparent 58%);
+  pointer-events: none;
+}
+.page-not-found-inner { width: min(100%, 800px); }
+.page-not-found-label, .page-not-found-note { font: 400 11px/1.7 var(--font-sans); letter-spacing: .16em; }
+.page-not-found-label { text-transform: uppercase; color: #c3a9b3; margin: 0 0 20px; }
+.page-not-found-number {
+  position: relative;
+  width: fit-content;
+  margin: 0 auto 28px;
+  font: 400 clamp(130px, 24vw, 250px)/1 var(--font-editorial);
+  letter-spacing: -.055em;
+  color: transparent;
+  -webkit-text-stroke: 1px #c21e5680;
+}
+.page-not-found-number span { position: absolute; height: 1px; inset: 57% -10% auto; background: linear-gradient(90deg, transparent, #c21e56, #7c0a02, transparent); box-shadow: 0 0 20px #c21e5655; }
+.page-not-found h1 { margin: 0; font-size: clamp(38px, 6vw, 68px); line-height: 1.12; letter-spacing: -.035em; text-wrap: balance; }
+.page-not-found h1 em { font-style: normal; background: linear-gradient(110deg, #c21e56, #7c0a02); background-clip: text; -webkit-background-clip: text; color: transparent; }
+.page-not-found-description { max-width: 440px; margin: 24px auto 32px; font: 400 14px/1.9 var(--font-sans); color: #b8adb2; text-wrap: pretty; }
+.page-not-found-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; }
+.page-not-found-actions a { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 48px; padding: 12px 22px; border: 1px solid #ffffff26; font: 400 12px/1.5 var(--font-sans); color: #f5f1f2; text-decoration: none; transition: background .2s, border-color .2s; }
+.page-not-found-actions .page-not-found-home { background: linear-gradient(110deg, #c21e562b, #7c0a022b); border-color: #c21e5680; }
+.page-not-found-actions a:hover { background: #c21e562b; border-color: #c21e56; }
+.page-not-found-actions a:focus-visible { outline: 2px solid #f1a0bb; outline-offset: 5px; }
+.page-not-found-note { margin: 36px 0 0; color: #998c92; letter-spacing: .04em; }
+@media (max-width: 480px) { .page-not-found { padding-inline: 20px; } .page-not-found-actions { flex-direction: column; } }
+@media (prefers-reduced-motion: reduce) { .page-not-found-actions a { transition: none; } }

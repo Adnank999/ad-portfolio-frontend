@@ -1,0 +1,27 @@
+# About page
+
+The page keeps its original hero, scale story, process shaders, experience, and closing invitation. Four focused sections extend the story:
+
+- `AboutHumanSide.tsx` follows the name section with personality, curiosity, and motivation.
+- `AboutTechnologies.tsx` follows “Always building. Always evolving.” with a lightweight SVG/HTML constellation. `technology-data.ts` holds the five categories and tool descriptions. Select a point by click, tap, Enter, or Space; arrow keys wrap between points and Home/End jump to the first/last. The selected button exposes its pressed state and labels the live detail region. This adds no WebGL canvas or continuous animation.
+- `AboutChallenges.tsx` presents seven expandable engineering stories: AI hotel-image classification, booking/payment reconciliation, queues, dynamic city/place/brand hotel pages, cashback, Coinbase Commerce, and Google Places request/dependency optimization.
+- `AboutExplorations.tsx` presents WebGL/Three.js/shaders, 3D modeling, and ongoing Java/C#/Rust/Python and AI learning. Native disclosure controls reveal the question and next learning direction.
+- `exploration-logos/` replaces the learning cards' SVG illustrations with three genuine shader-coated 3D marks. One lazy-loaded WebGL2 canvas draws all three views. It pauses offscreen, in hidden tabs, or via the artwork control, renders still for reduced motion, and retains CSS-only fallbacks. Geometry/material details and tuning live in that folder's README.
+
+Career details in `src/data/experience.ts` are shared by the About timeline and Experience page. Dates, employers, education, and the 6M+ images / 400k+ hotels classification figures come from the supplied CV. The challenge topics also incorporate the user's descriptions; no additional financial or performance results are asserted. The CV itself and its contact details are not copied into public assets. The technology constellation uses CV skills without presenting every listed tool as equal-depth production experience.
+
+The new sections use `src/styles/about-showcase.css`, scoped to the About page. They reuse the existing editorial/Inter typography and accent gradient tokens. Layouts stack on mobile; all controls work without hover. Interaction transitions and shader motion respect reduced motion, with no hidden scroll-dependent content on the server-rendered page. The original process-particle implementation is unchanged.
+
+## About process particles
+
+The About hero name uses the supplied Stranger Things outlined font for “ADNAN HOSSAIN” and Benguiat Bold for “KHAN.”, in exactly two non-wrapping lines. Container-relative type sizing fits the existing split layout and mobile column. Text-clipped gradients mirror the outlined/filled reference without changing global accent tokens or editorial typography. Font and color exceptions are scoped to `#about-name`; forced-colors mode keeps the text readable.
+
+Think retains the original hourglass point cloud and motion. Design, Build and Ship sample the alpha silhouettes of the supplied SVGs in `public/about-me/`, preserving their holes, gaps and small details. SVG colors are ignored; all four stages restore the ordered rainbow color mapping, giving the silhouettes smooth, uniform color bands rather than randomly mixed colors. Each particle keeps its color during morphs and rerenders. Positions are unchanged. The static fallback also uses a smooth rainbow gradient.
+
+`particleShapes.ts` loads and caches the three SVG masks on the client, then generates deterministic, centered point clouds. `ParticleCanvas.tsx` morphs between equal-sized buffers using the existing scroll spring. The original 4,200 desktop or 1,800 compact silhouette particles keep their positions. The SVG silhouettes remain front-facing while Think keeps its original rotation.
+
+The additive particle shader combines tiny bright cores, varied glowing beads and soft halos. Twelve faint glow sprites (six compact) follow sampled points through each morph, producing local colored haze without a fullscreen bloom pass. An additional 160 side sparks (60 compact) slowly drift upward, with independent lateral sway and twinkle; their placement adapts to the viewport width and fades at wrap boundaries. All three particle types share one geometry, material, canvas and draw call. Brightness is restrained on compact screens, and pixel sizing follows the renderer's actual DPR. No glow is applied to page text or other sections.
+
+The dotted rainbow SVG fallback uses those same source files, with a soft local glow and static side sparks, when loading, paused, reduced motion is requested, or WebGL2 is unavailable. Reduced-motion mode does not mount the animated canvas. Animation stops while the section is offscreen or the document is hidden. No new dependencies or textures are required.
+
+On About page hydration, the particle module and the three cached SVG masks start loading in parallel, without waiting for the process section to enter view. The offscreen canvas renders an initial demand frame to compile the shaders and upload buffers while the introduction is visible, then stays idle. Continuous rendering starts only near the process section and stops again offscreen, paused or hidden; layout changes can refresh a single demand frame. This warm-up stays client-only and is skipped for reduced motion. Leaving About unmounts and disposes the canvas as before.

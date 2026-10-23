@@ -1,0 +1,30 @@
+.site-search-backdrop { position: fixed; inset: 0; z-index: 120; background: rgb(5 7 13 / 65%); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.site-search { position: fixed; z-index: 121; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(640px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); overflow-y: auto; overscroll-behavior: contain; padding: clamp(20px, 4vw, 32px); border: 1px solid rgb(255 255 255 / 19%); border-radius: 28px; background: linear-gradient(135deg, rgb(255 255 255 / 10%), rgb(255 255 255 / 3%)), rgb(17 19 25 / 82%); -webkit-backdrop-filter: blur(32px) saturate(135%); backdrop-filter: blur(32px) saturate(135%); color: #f7f8fb; box-shadow: 0 40px 120px rgb(0 0 0 / 45%), inset 0 1px rgb(255 255 255 / 12%); }
+.site-search-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.site-search-eyebrow { margin: 0 0 10px; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
+.site-search h2 { margin: 0; font-size: clamp(24px, 5vw, 32px); line-height: 1.2; }
+.site-search-description { margin: 12px 0 24px; color: #b8bac5; font-size: 12px; line-height: 1.7; }
+.site-search-close { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; border: 1px solid rgb(255 255 255 / 12%); border-radius: 50%; background: rgb(255 255 255 / 4%); color: #d5d7df; cursor: pointer; transition: background .2s, color .2s; }
+.site-search-close:hover { background: rgb(var(--accent-rgb) / 12%); color: var(--accent); }
+.site-search-field { display: flex; align-items: center; gap: 12px; padding: 6px 16px; border: 1px solid rgb(255 255 255 / 16%); border-radius: 14px; background: rgb(0 0 0 / 16%); color: var(--accent); }
+.site-search-field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 12%); }
+.site-search-field input { min-width: 0; width: 100%; min-height: 44px; border: 0; outline: none; background: transparent; color: white; font-size: 14px; }
+.site-search-field input::placeholder { color: #a4a7b5; }
+.site-search-count { margin: 20px 2px 10px; font-size: 10px; color: #b8bac5; letter-spacing: .08em; text-transform: uppercase; }
+.site-search-results { list-style: none; padding: 0; margin: 0; max-height: min(340px, 36dvh); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgb(var(--accent-rgb) / 35%) transparent; }
+.site-search-results a { display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 64px; padding: 14px 12px; border-radius: 12px; color: inherit; text-decoration: none; transition: background .2s, color .2s; }
+.site-search-results a:hover, .site-search-results a:focus-visible { background: rgb(var(--accent-rgb) / 9%); color: var(--accent); }
+.site-search-results span { font-size: 17px; }
+.site-search-results small { display: block; margin-top: 5px; color: #b8bac5; font: 11px/1.6 var(--font-body); }
+.site-search-results svg { flex-shrink: 0; color: var(--accent); }
+.site-search-empty { padding: 24px 12px; color: #c8cbd5; font-size: 13px; line-height: 1.8; }
+.site-search-footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 20px; padding-top: 18px; border-top: 1px solid rgb(255 255 255 / 10%); color: #a4a7b5; }
+.site-search-footer span { font: 10px/1.8 var(--font-body); }
+.site-search-footer kbd { font: inherit; border: 1px solid rgb(255 255 255 / 18%); border-radius: 4px; padding: 2px 5px; }
+.site-search :is(a, button):focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.site-search-backdrop[data-state='open'] { animation: search-backdrop-in .2s ease-out; }
+.site-search[data-state='open'] { animation: search-glass-in .22s ease-out; }
+@keyframes search-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes search-glass-in { from { opacity: 0; transform: translate(-50%, calc(-50% + 10px)) scale(.98); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@media (max-width: 480px) { .site-search-footer > span:first-child { display: none; } .site-search-footer { justify-content: flex-end; } }
+@media (prefers-reduced-motion: reduce) { .site-search, .site-search-backdrop { animation: none !important; } }

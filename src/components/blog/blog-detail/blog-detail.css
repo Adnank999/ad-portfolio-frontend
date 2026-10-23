@@ -1,0 +1,28 @@
+.blog-article-body { overflow-wrap: anywhere; }
+.blog-article-body > :first-child { margin-top: 0; }
+.blog-article-body p { margin: 1.5rem 0; }
+.blog-article-body :is(h2, h3, h4, h5, h6) { color: #f3f0f2; line-height: 1.08; text-wrap: balance; scroll-margin-top: 8rem; }
+.blog-article-body h2 { margin: 3.5rem 0 1.75rem; font-size: clamp(2.75rem, 4vw, 4rem); }
+.blog-article-body h3 { margin: 2.5rem 0 1.25rem; font-size: 2.25rem; }
+.blog-article-body :is(h4, h5, h6) { margin: 2rem 0 1rem; font-size: 1.75rem; }
+.blog-article-body :is(ul, ol) { margin: 1.5rem 0; padding-left: 1.5rem; }
+.blog-article-body ul { list-style: disc; }
+.blog-article-body ol { list-style: decimal; }
+.blog-article-body li { margin: .65rem 0; }
+.blog-article-body li::marker { color: var(--accent); }
+.blog-article-body a { color: var(--accent); text-decoration: underline; text-underline-offset: .2em; }
+.blog-article-body a:hover { color: #f3f0f2; }
+.blog-article-body :is(a, summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.blog-article-body :is(blockquote, aside) { margin: 2rem 0; border-left: 2px solid var(--accent); border-radius: 0 .75rem .75rem 0; padding: 1rem 1.5rem; background: #C21E560d; }
+.blog-article-body img { display: block; max-width: 100%; height: auto; margin: 2rem 0; border-radius: .75rem; }
+.blog-article-body pre { max-width: 100%; overflow-x: auto; margin: 2rem 0; border: 1px solid #ffffff1a; border-radius: .75rem; padding: 1.5rem; background: #101013; white-space: pre; }
+.blog-article-body code { border-radius: .25rem; background: #ffffff0d; padding: .1em .3em; font-size: .9em; }
+.blog-article-body pre code { padding: 0; background: none; }
+.blog-article-body table { display: block; width: 100%; max-width: 100%; overflow-x: auto; margin: 2rem 0; border-collapse: collapse; font-size: .8rem; }
+.blog-article-body :is(th, td) { min-width: 8rem; border: 1px solid #ffffff26; padding: 1rem; text-align: left; vertical-align: top; }
+.blog-article-body th { background: #211c21; color: #f3f0f2; }
+.blog-article-body caption { padding: 1rem; text-align: left; color: #e8dfe8; }
+.blog-article-body details { border-bottom: 1px solid #ffffff1a; padding: 1rem 0; }
+.blog-article-body summary { min-height: 3rem; cursor: pointer; color: #f3f0f2; font-size: 1rem; }
+.blog-article-body details p { margin: 1rem 0; }
+.blog-article-body hr { margin: 2rem 0; border-color: #ffffff1a; }

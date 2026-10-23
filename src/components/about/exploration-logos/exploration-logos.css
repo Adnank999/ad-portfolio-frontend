@@ -1,0 +1,27 @@
+.about-exploration-grid { position: relative; isolation: isolate; }
+.about-exploration-art { position: relative; }
+.exploration-logo-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+.exploration-logo-fallback { position: relative; width: 142px; height: 142px; transform: rotate(-12deg); transition: opacity .2s ease; }
+.about-exploration-grid[data-logo-state="ready"] .exploration-logo-fallback { opacity: 0; }
+.exploration-logo-fallback i { position: absolute; display: block; background: var(--accent-text-gradient); box-shadow: 8px 10px 0 rgb(var(--accent-rgb) / 13%); }
+.exploration-logo-fallback-visual .exploration-logo-body, .exploration-logo-fallback-visual .exploration-logo-back { inset: 12px; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.exploration-logo-fallback-visual .exploration-logo-back { transform: translate(7px, 10px) rotate(60deg) scale(.82); opacity: .55; }
+.exploration-logo-fallback-visual .exploration-logo-body::after { content: ''; position: absolute; inset: 25% 25% 13%; background: var(--about-bg); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.exploration-logo-fallback-visual .exploration-logo-core { width: 28px; height: 28px; left: 57px; top: 72px; transform: rotate(45deg); }
+.exploration-logo-fallback-modeling { transform: rotate(-12deg) skewY(8deg); }
+.exploration-logo-fallback-modeling .exploration-logo-body { inset: 20px; border: 14px solid var(--accent); background: transparent; transform: rotate(30deg) skewY(-12deg); }
+.exploration-logo-fallback-modeling .exploration-logo-back { inset: 20px; border: 10px solid var(--accent-text-end); background: transparent; transform: translate(12px, -14px) rotate(30deg) skewY(-12deg); }
+.exploration-logo-fallback-modeling .exploration-logo-core { width: 38px; height: 38px; top: 52px; left: 52px; transform: rotate(45deg); }
+.exploration-logo-fallback-systems .exploration-logo-body { inset: 27px; border: 13px solid var(--accent); background: transparent; }
+.exploration-logo-fallback-systems .exploration-logo-back { inset: 10px 0; background: repeating-linear-gradient(0deg, transparent 0 21px, var(--accent-text-end) 21px 30px, transparent 30px 38px); clip-path: polygon(0 0, 25% 0, 25% 100%, 0 100%, 0 0, 75% 0, 100% 0, 100% 100%, 75% 100%, 75% 0); }
+.exploration-logo-fallback-systems .exploration-logo-core { width: 34px; height: 34px; top: 54px; left: 54px; transform: rotate(45deg); }
+.about-exploration-playback { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 24px; }
+.about-exploration-pause { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 0; border: 0; background: none; color: var(--about-muted); font: 11px/1.5 var(--font-sans); cursor: pointer; }
+.about-exploration-pause:hover { color: var(--about-ink); }
+.about-exploration-pause svg { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .exploration-logo-fallback { transition: none; } }
+@media (forced-colors: active) {
+  .exploration-logo-canvas { display: none; }
+  .about-exploration-grid[data-logo-state="ready"] .exploration-logo-fallback { opacity: 1; }
+  .exploration-logo-fallback i { background: CanvasText; border-color: CanvasText; box-shadow: none; }
+}

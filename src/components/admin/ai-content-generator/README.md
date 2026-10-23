@@ -1,0 +1,17 @@
+# AI content generator
+
+`AIContentGeneratorModal` is shared by the Blog, Project, Case Study and Service editors. It uses the existing Radix dialog and admin UI primitives. Context and preview state are local to the modal; `ContentEditor` remains the source of unsaved CMS values. Owners/admins with the relevant write permission see the action. Rust enforces authorization independently.
+
+The mutation lives in `queries/ai/useAIContentGeneration.ts`. A same-origin TanStack Start server function forwards the HTTP-only cookie's bearer token to `POST /api/v1/admin/ai/generate`. Provider credentials and provider calls exist only in Rust. Configure `PORTFOLIO_API_URL` for the frontend server and `AI_*` variables in the backend; see `Backend/docs/ai-content.md`.
+
+Supported scopes are all fields, rich body only, SEO only, or selected paths. Empty-only generation excludes populated values and checks again during application. Each proposal stores its generation-time baseline. If a selected value changes before Apply, that value is left untouched and the user must review/regenerate it. Existing-value replacements require a separate confirmation checkbox. Regenerating a single field/group retains unrelated proposals.
+
+Services use `fields.pageContent` for the body scope, with the same structured schema as the saved page sections. Navbar title/description, core details, FAQs and SEO are supported. Service visibility, publishing, images/videos, groups, badges and artwork remain manually controlled. Service drafts display readable section text for review and apply directly to the structured admin fields.
+
+`lib/ai-content/contracts.ts` defines paths and scope rules. `validation.ts` validates server results and checks generated JSON against the same Tiptap schema used by the editor. `apply.ts` maps selected paths into the CMS document, retains inline images, merges nonduplicate FAQs, and preserves publishing controls/assets. Unknown paths are rejected before preview. URLs are never model-generated. The actual `RichTextEditor` synchronizes externally applied JSON through Tiptap commands without remounting or synthetic DOM events.
+
+Cancel/close aborts the frontend request and ignores obsolete completions. The provider may already have accepted a request and consumed tokens. Modal results do not invoke create/update mutations. The existing Save Changes action is the only persistence step. No automatic field application, publishing, autosaving, or local-storage prompt persistence is added.
+
+`AIGenerationUsage` shows actual provider input/output tokens, thinking and cached subsets, total tokens, and a server-calculated USD estimate. Output includes thinking tokens. The latest successful request and running totals for the current open modal include individual-field regeneration. Estimates show the configured rates and remain unavailable when usage or pricing is missing, rather than pretending to be free. Totals reset on close and are not persisted billing history; failed/cancelled requests are excluded. Response validation checks token counts and estimate arithmetic before display. Rates stay in Rust; see the backend AI documentation for overrides.
+
+Run `bun run test:unit` for state/contract tests and DOM tests of the real dialog and editor. `bun run test` checks production TypeScript; `bun run build` builds client/server bundles. Provider responses are mocked only in tests. Tests use Bun, Happy DOM, and React Testing Library; no real API keys are needed.

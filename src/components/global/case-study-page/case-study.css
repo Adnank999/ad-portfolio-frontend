@@ -1,0 +1,14 @@
+.case-study-rich{font:14px/2 var(--font-body);color:#5e5268;overflow-wrap:anywhere}
+.case-study-rich :is(h2,h3){color:#261c30;line-height:1.15;margin:1.4em 0 .6em}
+.case-study-rich h2{font-size:clamp(30px,4vw,52px)}
+.case-study-rich h3{font-size:clamp(24px,3vw,36px)}
+.case-study-rich :is(p,ul,ol,blockquote,pre,table,figure){margin:1.2em 0}
+.case-study-rich :is(ul,ol){padding-left:1.6em}
+.case-study-rich ul{list-style:disc}
+.case-study-rich ol{list-style:decimal}
+.case-study-rich img{max-width:100%;height:auto;border-radius:12px}
+.case-study-rich :is(pre,table){display:block;max-width:100%;overflow-x:auto}
+.case-study-rich pre{background:#261c30;color:#efedf7;padding:20px;border-radius:12px}
+.case-study-rich :is(th,td){padding:12px;border:1px solid #261c3026}
+.case-study-rich a{color:#96355f;text-decoration:underline}
+.case-study-rich blockquote{border-left:2px solid var(--accent);padding-left:20px}

@@ -1,0 +1,1 @@
+Service settings edit independent page/navbar visibility, navbar copy/group/order, and all seeded structured page sections. Each artwork slot accepts an uploaded image/video or an existing URL. Media uploads use the authenticated R2 endpoint. The shared content editor owns saving, permissions, FAQ and SEO editing, optimistic version checks, and AI proposal review.

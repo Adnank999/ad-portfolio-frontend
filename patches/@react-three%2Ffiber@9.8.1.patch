@@ -1,0 +1,111 @@
+diff --git a/dist/events-21d8cd92.cjs.dev.js b/dist/events-21d8cd92.cjs.dev.js
+index 9b43bdf7d5f4e4fa58d53e0a53954d3595569459..36fa06b6633d58b886d7e01be82a0d0ef1cce482 100644
+--- a/dist/events-21d8cd92.cjs.dev.js
++++ b/dist/events-21d8cd92.cjs.dev.js
+@@ -2,6 +2,7 @@
+ 
+ var React = require('react');
+ var THREE = require('three');
++var createTimerClock = require('./timer-clock.cjs').createTimerClock;
+ var jsxRuntime = require('react/jsx-runtime');
+ var traditional = require('zustand/traditional');
+ var suspendReact = require('suspend-react');
+@@ -1076,7 +1077,7 @@ const createStore = (invalidate, advance) => {
+       linear: false,
+       flat: false,
+       controls: null,
+-      clock: new THREE__namespace.Clock(),
++      clock: createTimerClock(THREE__namespace),
+       pointer,
+       mouse: pointer,
+       frameloop: 'always',
+diff --git a/dist/events-9ce18a08.esm.js b/dist/events-9ce18a08.esm.js
+index ea6b4c903fe1a45092eca8440397ebcef2de7341..da043fcfe0f461275facfac62eea4e647e6282c4 100644
+--- a/dist/events-9ce18a08.esm.js
++++ b/dist/events-9ce18a08.esm.js
+@@ -1,6 +1,7 @@
+ import * as React from 'react';
+ import React__default from 'react';
+ import * as THREE from 'three';
++import { createTimerClock } from './timer-clock.cjs';
+ import { jsx, Fragment } from 'react/jsx-runtime';
+ import { createWithEqualityFn } from 'zustand/traditional';
+ import { suspend, preload, clear } from 'suspend-react';
+@@ -1051,7 +1052,7 @@ const createStore = (invalidate, advance) => {
+       linear: false,
+       flat: false,
+       controls: null,
+-      clock: new THREE.Clock(),
++      clock: createTimerClock(THREE),
+       pointer,
+       mouse: pointer,
+       frameloop: 'always',
+diff --git a/dist/events-a816cbab.cjs.prod.js b/dist/events-a816cbab.cjs.prod.js
+index c26a227f3264c978f78d2ab7a7231ce943fe911f..291f7801160b716a69f9799c20913e420b1a0680 100644
+--- a/dist/events-a816cbab.cjs.prod.js
++++ b/dist/events-a816cbab.cjs.prod.js
+@@ -2,6 +2,7 @@
+ 
+ var React = require('react');
+ var THREE = require('three');
++var createTimerClock = require('./timer-clock.cjs').createTimerClock;
+ var jsxRuntime = require('react/jsx-runtime');
+ var traditional = require('zustand/traditional');
+ var suspendReact = require('suspend-react');
+@@ -1076,7 +1077,7 @@ const createStore = (invalidate, advance) => {
+       linear: false,
+       flat: false,
+       controls: null,
+-      clock: new THREE__namespace.Clock(),
++      clock: createTimerClock(THREE__namespace),
+       pointer,
+       mouse: pointer,
+       frameloop: 'always',
+diff --git a/node_modules/@react-three/fiber/dist/timer-clock.cjs b/dist/timer-clock.cjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..01a0edd0710564dfeab880d44954354eac368e82
+--- /dev/null
++++ b/dist/timer-clock.cjs
+@@ -0,0 +1,42 @@
++'use strict';
++
++function createTimerClock(THREE) {
++  const timer = new THREE.Timer();
++  return {
++    autoStart: true,
++    startTime: 0,
++    oldTime: 0,
++    elapsedTime: 0,
++    running: false,
++    start() {
++      this.startTime = performance.now();
++      this.oldTime = this.startTime;
++      this.elapsedTime = 0;
++      this.running = true;
++      timer.reset();
++    },
++    stop() {
++      this.getElapsedTime();
++      this.running = false;
++      this.autoStart = false;
++    },
++    getElapsedTime() {
++      this.getDelta();
++      return this.elapsedTime;
++    },
++    getDelta() {
++      if (this.autoStart && !this.running) {
++        this.start();
++        return 0;
++      }
++      if (!this.running) return 0;
++      timer.update();
++      const delta = timer.getDelta();
++      this.oldTime = performance.now();
++      this.elapsedTime += delta;
++      return delta;
++    }
++  };
++}
++
++module.exports = { createTimerClock };

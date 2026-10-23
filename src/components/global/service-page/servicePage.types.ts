@@ -1,0 +1,26 @@
+export type ServiceArtworkKind = "web" | "software" | "cloud" | "data" | "automation" | "systems" | "growth";
+export type ServiceItem = { title: string; text: string };
+export type ServiceContent = {
+  media?: import('@/lib/services/services').ServiceMedia[];
+  slug: string;
+  category: string;
+  title: string;
+  summary: string;
+  artwork: ServiceArtworkKind;
+  overview: { title: string; text: string; definitions: ServiceItem[] };
+  challenge: { title: string; before: string[]; after: string[] };
+  offerings: { title: string; items: ServiceItem[] };
+  deliverables: { title: string; items: ServiceItem[]; acceptance: string };
+  spotlight: { title: string; text: string; points: string[] };
+  sectors: string[];
+  tools: string[];
+  approach: { title: string; items: ServiceItem[] };
+  process: string[];
+  engagement: { title: string; items: ServiceItem[] };
+  preparation: { title: string; text: string; items: string[] };
+  faqTitle: string;
+  faqs: ServiceItem[];
+  related: string[];
+  articles: ServiceItem[];
+  projectSlugs?: string[];
+};

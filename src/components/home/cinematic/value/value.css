@@ -1,0 +1,55 @@
+.cinema-home .cinema-value { padding-block: clamp(85px, 9vw, 140px); min-height: 100svh; display: flex; align-items: center; }
+.value-layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(40px, 7vw, 110px); align-items: center; }
+.value-visual { min-width: 0; position: relative; }
+.value-visual-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--home-line); }
+.value-visual-heading > span { color: var(--home-muted); font: 9px/1.8 var(--font-body); letter-spacing: .07em; }
+.value-visual-heading > span:last-child { white-space: nowrap; color: var(--accent); }
+.value-particle-stage { position: relative; aspect-ratio: 1; isolation: isolate; }
+.value-particle-fallback { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity .2s; }
+[data-value-particles-ready='true'] .value-particle-fallback { opacity: 0; }
+.value-orbit { position: absolute; top: 17%; left: 17%; width: 66%; height: 66%; border: 1px solid rgb(255 255 255 / 6%); border-radius: 50%; pointer-events: none; }
+.value-orbit-one { transform: rotate(-30deg) scaleX(.52); border-color: rgb(var(--accent-rgb) / 12%); }
+.value-orbit-two { transform: rotate(35deg) scaleX(.52); }
+.value-visual-caption { display: flex; align-items: center; gap: 12px; padding-top: 20px; border-top: 1px solid var(--home-line); }
+.value-visual-caption > span:last-child, .value-visual-caption > span:last-child span { font: 9px/1.8 var(--font-body); color: var(--home-muted); letter-spacing: .12em; text-transform: uppercase; }
+.value-visual-caption > span:last-child span { margin-inline: 12px; color: var(--accent); }
+.value-signal { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px rgb(var(--accent-rgb) / 60%); }
+.cinema-home .cinema-value h2 { font-size: clamp(34px, 3.8vw, 62px); line-height: 1.16; text-wrap: balance; letter-spacing: -.02em; }
+.cinema-value h2 > span { display: block; font: inherit; letter-spacing: inherit; }
+.value-intro { margin-top: 25px !important; max-width: 520px; font-size: 13px; line-height: 1.9; color: var(--home-muted); }
+.value-pillars { display: grid; gap: 22px; margin-top: 30px; }
+.value-pillar { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 15px; }
+.value-pillar-number { padding-top: 5px; align-self: start; font: 9px/1.6 var(--font-body); }
+.value-pillar h3 { font-size: clamp(17px, 1.4vw, 21px); line-height: 1.4; color: var(--home-paper); }
+.value-pillar p { margin-top: 7px !important; font-size: 11px; line-height: 1.85; color: var(--home-muted); max-width: 470px; }
+.value-actions { padding-left: 39px; margin-top: 20px; }
+.value-actions .cinema-link { font-size: 11px; gap: 20px; }
+.value-actions button:disabled { opacity: .6; cursor: default; }
+.value-interaction-note { margin-top: 12px !important; font-size: 9px; line-height: 1.8; color: var(--home-muted); }
+@media (max-width: 900px) {
+  .value-layout { grid-template-columns: 1.1fr .9fr; gap: 35px; }
+  .value-visual-heading > span:last-child { display: none; }
+  .value-visual-caption > span:last-child, .value-visual-caption > span:last-child span { font-size: 8px; letter-spacing: .04em; }
+  .value-visual-caption > span:last-child span { margin-inline: 5px; }
+  .value-visual-caption { gap: 8px; }
+  .value-pillar { grid-template-columns: 20px minmax(0, 1fr); gap: 10px; }
+  .value-actions { padding-left: 30px; }
+}
+@media (max-width: 600px) {
+  .cinema-home .cinema-value { padding-block: 70px; }
+  .value-layout { grid-template-columns: 1fr; gap: 50px; }
+  .value-visual { width: 100%; max-width: 390px; margin-inline: auto; }
+  .value-visual-heading { padding-bottom: 15px; }
+  .value-visual-heading > span:last-child { display: inline; }
+  .value-particle-stage { max-width: 340px; margin-inline: auto; }
+  .value-visual-caption { padding-top: 15px; }
+  .cinema-home .cinema-value h2 { font-size: clamp(31px, 8vw, 42px); }
+  .value-intro { margin-top: 22px !important; font-size: 12px; }
+  .value-pillars { margin-top: 26px; gap: 23px; }
+  .value-pillar h3 { font-size: 18px; }
+  .value-pillar p { font-size: 11px; }
+  .value-actions .cinema-link { font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .value-particle-fallback { transition: none; }
+}

@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build output and framework caches
+/dist/
+/dist-ssr/
+/.output/
+/.tanstack/
+/.vite/
+/.cache/
+*.tsbuildinfo
+
+# Local environment files (keep credential-free examples)
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.local
+
+# Logs and test reports
+*.log
+/coverage/
+
+# Editor and operating system files
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~

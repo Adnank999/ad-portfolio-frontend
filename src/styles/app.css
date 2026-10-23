@@ -1,0 +1,159 @@
+@import 'tailwindcss' source('../');
+
+@theme {
+  --color-accent: #C21E56;
+  --color-accent-50: #fff1f3;
+  --color-accent-100: #ffe0e6;
+  --color-accent-200: #ffc2ce;
+  --color-accent-300: #ea83a7;
+  --color-accent-400: #dc386e;
+  --color-accent-500: #C21E56;
+  --color-accent-600: #a51949;
+  --color-accent-700: #86143b;
+  --color-accent-800: #68102e;
+  --color-accent-900: #4b0b21;
+  --color-accent-950: #2a0613;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'Inter', system-ui, sans-serif;
+  --font-heading: 'PP Editorial', Georgia, serif;
+  --font-heading-compact: 'PP Editorial', Georgia, serif;
+}
+
+@font-face { font-family: 'Inter'; src: url('/fonts/Inter-Variable.ttf') format('truetype'); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'PP Editorial'; src: local('PPEditorialNew-Regular'), local('PP Editorial New Regular'), local('PP Editorial New'), local('PP Editorial'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'PP Editorial Bold'; src: local('PPEditorialNew-Bold'), local('PP Editorial New Bold'), local('PP Editorial Bold'); font-weight: 700; font-style: normal; font-display: swap; }
+
+:root {
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-body);
+  --font-editorial: 'PP Editorial', Georgia, serif;
+  --font-heading: var(--font-editorial);
+  --font-heading-compact: var(--font-editorial);
+  --font-display: 'PP Editorial Bold', Georgia, serif;
+  color-scheme: dark;
+  --bg: #05070d;
+  --surface: rgba(255,255,255,.045);
+  --surface-strong: rgba(255,255,255,.075);
+  --line: rgba(255,255,255,.09);
+  --muted: #8b93a7;
+  --accent: var(--color-accent);
+  --accent-rgb: 194 30 86;
+  --accent-text-end: #7C0A02;
+  --accent-text-gradient: linear-gradient(110deg, var(--accent), var(--accent-text-end));
+  --accent-foreground: #ffffff;
+}
+
+html { scroll-behavior: smooth; background: var(--bg); }
+body { margin: 0; min-width: 320px; background: var(--bg); color: #f7f8fb; font-family: var(--font-sans); }
+button, input, select, textarea { font-family: var(--font-sans); }
+button { font-weight: 500; letter-spacing: 0; }
+h1, h2, h3, h4, h5, h6, [role='heading'], .heading, .display-heading { font-family: var(--font-heading); font-weight: 400; font-synthesis: none; letter-spacing: .015em; }
+span { font-family: var(--font-editorial); font-weight: 400; font-synthesis: none; }
+h1 { font-family: var(--font-display); font-weight: 700; letter-spacing: -.04em; }
+p { font-family: var(--font-body); }
+* { box-sizing: border-box; }
+::selection { background: rgb(var(--accent-rgb) / 35%); color: white; }
+:is(.bg-accent, .bg-accent-500) { color: var(--accent-foreground); }
+
+@layer base {
+  h2, h3, span {
+    font-family: var(--font-editorial) !important;
+    font-weight: 400 !important;
+    font-style: normal !important;
+    font-synthesis: none;
+  }
+
+  .cinema-home :is(#hero-title, #contact-title),
+  .cinema-home :is(#hero-title, #contact-title) * {
+    font-family: var(--font-display) !important;
+    font-weight: 700 !important;
+    font-style: normal !important;
+    font-synthesis: none;
+  }
+}
+
+@keyframes float { 0%,100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(0,-14px,0); } }
+@keyframes pulse-glow { 0%,100% { opacity:.35; } 50% { opacity:.7; } }
+.animate-float { animation: float 8s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulse-glow 5s ease-in-out infinite; }
+
+.grid-bg {
+  background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+
+.glass {
+  background: linear-gradient(135deg, rgba(255,255,255,.07), rgba(255,255,255,.025));
+  border: 1px solid var(--line);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 24px 80px rgba(0,0,0,.18), inset 0 1px rgba(255,255,255,.035);
+}
+
+@utility text-accent {
+  color: var(--accent);
+  --accent-text-paint: var(--accent-text-gradient);
+  --accent-text-fill: transparent;
+}
+
+@utility text-accent-* {
+  color: --value(--color-accent-*);
+  --accent-text-paint: var(--accent-text-gradient);
+  --accent-text-fill: transparent;
+}
+
+@utility text-white {
+  color: #fff;
+  --accent-text-paint: none;
+  --accent-text-fill: currentColor;
+}
+
+.accent-text { font: inherit; letter-spacing: inherit; background-image: var(--accent-text-paint, none); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: var(--accent-text-fill, currentColor); }
+.text-gradient, .accent-text-gradient { background-image: var(--accent-text-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+:is(.portfolio-nav-brand-name > span, .portfolio-nav-trigger sup, .portfolio-nav-spark, .cinema-label > span:first-child, .cinema-home em, .about-name-outline, .about-name-solid, .site-search-eyebrow, .blog-article-body a, .admin-editor .tiptap a) { background-image: var(--accent-text-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+:is(.portfolio-nav-all, .portfolio-nav-simple-link:hover, .cinema-link:hover, .cinema-process-navigation button[aria-current], .site-search-results a:hover, .site-search-results a:focus-visible) { --accent-text-paint: var(--accent-text-gradient); --accent-text-fill: transparent; }
+@media (forced-colors: active) {
+  .accent-text, .text-gradient, .accent-text-gradient, :is(.portfolio-nav-brand-name > span, .portfolio-nav-trigger sup, .portfolio-nav-spark, .cinema-label > span:first-child, .cinema-home em, .about-name-outline, .about-name-solid, .site-search-eyebrow, .blog-article-body a, .admin-editor .tiptap a) { background-image: none; -webkit-text-fill-color: currentColor; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+
+ @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+
+
+
+
+/* Smooth timing for View Transitions */
+@layer utilities {
+  /* Forces hardware acceleration layer promotion for smooth 60fps morphs */
+  .gpu-layer {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+}
+
+/* Optimize Framer Motion layout transitions */
+[data-framer-portal-id] {
+  pointer-events: auto;
+}
