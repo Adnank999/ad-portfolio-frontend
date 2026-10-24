@@ -47,7 +47,7 @@ afterEach(() => cleanup())
 
 describe('shared AI generator and real CMS form integration', () => {
   test('service AI edits structured sections and navbar copy and only saves after explicit Save', async () => {
-    const seed = JSON.parse(readFileSync(new URL('../../Backend/examples/services.json', import.meta.url), 'utf8'))[0] as ContentWrite
+    const seed = JSON.parse(readFileSync(new URL('./fixtures/services.json', import.meta.url), 'utf8'))[0] as ContentWrite
     const page = structuredClone(seed.fields.pageContent) as Record<string, import('../src/server/portfolio-content').JsonValue>
     page.faqTitle = 'AI-generated questions heading'
     respond = async request => response(request, { 'fields.pageContent': page, 'fields.navTitle': 'AI service navigation' })

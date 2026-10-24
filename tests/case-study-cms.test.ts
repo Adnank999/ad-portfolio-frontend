@@ -6,9 +6,9 @@ import { fieldsFor, existingAIFields } from '../src/lib/ai-content/contracts'
 import type { CaseStudy } from '../src/data/case-studies/types'
 import type { ContentWrite } from '../src/server/portfolio-content'
 
-const records: ContentWrite[] = JSON.parse(readFileSync(new URL('../../Backend/examples/case-studies.json', import.meta.url), 'utf8'))
+const records: ContentWrite[] = JSON.parse(readFileSync(new URL('./fixtures/case-studies.json', import.meta.url), 'utf8'))
 
-test('database import preserves every currently published study and FAQ without inventing evidence', () => {
+test('case-study contract fixture preserves every published study and FAQ without inventing evidence', () => {
   expect(records).toHaveLength(caseStudies.length)
   for (const study of caseStudies) {
     const record = records.find(record => record.slug === study.slug)!

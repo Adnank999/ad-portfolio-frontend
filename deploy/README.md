@@ -4,6 +4,8 @@ These files were imported from `portfolio-cicd-dockerhub.zip` and adapted to thi
 
 Pull requests to `main` run the frozen Bun install, TypeScript checks, unit tests, and the Vite/Nitro SSR build. Pushes to `main` and manual runs on `main` can additionally upload `.output/` and restart the existing frontend service when `FRONTEND_DEPLOY_ENABLED=true`.
 
+The unit tests use committed CMS contract snapshots in `tests/fixtures/`. They run from a frontend-only checkout without a sibling backend repository. See [fixture maintenance](../tests/fixtures/README.md) when intentionally updating shared seed content or schemas.
+
 ## GitHub settings
 
 In `Adnank999/ad-portfolio-frontend`, open **Settings > Secrets and variables > Actions**.

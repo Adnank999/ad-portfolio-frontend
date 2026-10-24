@@ -16,9 +16,9 @@ import { emptyServiceFields, type PublishedService } from '../src/lib/services/s
 import { emptyField } from '../src/lib/ai-content/contracts'
 
 afterEach(cleanup)
-const records: ContentWrite[] = JSON.parse(readFileSync(new URL('../../Backend/examples/services.json', import.meta.url), 'utf8'))
+const records: ContentWrite[] = JSON.parse(readFileSync(new URL('./fixtures/services.json', import.meta.url), 'utf8'))
 
-test('all existing service defaults validate and share the exact backend content schema', () => {
+test('all existing service defaults validate against the backend content schema snapshot', () => {
   expect(records).toHaveLength(13)
   expect(new Set(records.map(record => record.slug)).size).toBe(13)
   for (const record of records) {
@@ -27,7 +27,7 @@ test('all existing service defaults validate and share the exact backend content
     expect(record.fields.navEnabled).toBe(true)
     expect(record.faqs?.length).toBeGreaterThan(0)
   }
-  expect(schema).toEqual(JSON.parse(readFileSync(new URL('../../Backend/examples/service-content.schema.json', import.meta.url), 'utf8')))
+  expect(schema).toEqual(JSON.parse(readFileSync(new URL('./fixtures/service-content.schema.json', import.meta.url), 'utf8')))
 })
 
 test('navbar switches are independent of public availability and sort by the saved order', () => {
