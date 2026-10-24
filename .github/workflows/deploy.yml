@@ -1,0 +1,94 @@
+name: Frontend CI and Deploy
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test-build-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.0'
+
+      - name: Check deployment script syntax
+        run: bash -n deploy/activate-frontend.sh
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run test
+
+      - name: Unit tests
+        run: bun run test:unit
+
+      - name: Build production SSR output
+        run: |
+          test -f public/loader/crimson_logo_optimized.glb
+          bun run build
+          test -f .output/server/index.mjs
+          test -d .output/public
+
+      - name: Configure verified SSH access
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.FRONTEND_DEPLOY_ENABLED == 'true'
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ vars.VPS_SSH_PORT || '22' }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          [[ "$VPS_HOST" =~ ^[a-zA-Z0-9._:-]+$ ]] || exit 2
+          [[ "$VPS_USER" =~ ^[a-zA-Z_][a-zA-Z0-9_-]*$ ]] || exit 2
+          [[ "$VPS_PORT" =~ ^[0-9]+$ ]] && ((10#$VPS_PORT >= 1 && 10#$VPS_PORT <= 65535)) || exit 2
+          test -n "$VPS_SSH_KEY" && test -n "$VPS_KNOWN_HOSTS"
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$VPS_SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+          printf 'Host portfolio-vps\n  HostName %s\n  User %s\n  Port %s\n  IdentityFile %s/.ssh/id_ed25519\n  IdentitiesOnly yes\n  BatchMode yes\n  StrictHostKeyChecking yes\n' "$VPS_HOST" "$VPS_USER" "$VPS_PORT" "$HOME" > "$HOME/.ssh/config"
+          chmod 600 "$HOME/.ssh/config"
+
+      - name: Upload built release and activate
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.FRONTEND_DEPLOY_ENABLED == 'true'
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+          FRONTEND_APP_DIR: ${{ vars.FRONTEND_APP_DIR || '/root/apps/ad-portfolio-frontend' }}
+          FRONTEND_SERVICE: ${{ vars.FRONTEND_SERVICE || 'ad-portfolio-frontend' }}
+          FRONTEND_HEALTH_URL: ${{ vars.FRONTEND_HEALTH_URL || 'http://127.0.0.1:3000/' }}
+        run: |
+          [[ "$FRONTEND_APP_DIR" =~ ^/[a-zA-Z0-9._/-]+$ && "$FRONTEND_APP_DIR" != / ]] || exit 2
+          [[ "$FRONTEND_SERVICE" =~ ^[a-zA-Z0-9_.@-]+$ ]] || exit 2
+          RELEASE_ID="$DEPLOY_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          RELEASE_DIR="$FRONTEND_APP_DIR/.deploy/releases/$RELEASE_ID/.output"
+          printf -v PREPARE_COMMAND 'mkdir -p -- %q' "$RELEASE_DIR"
+          ssh portfolio-vps "$PREPARE_COMMAND"
+          rsync -az --delete -e ssh .output/ "portfolio-vps:$RELEASE_DIR/"
+          printf -v ACTIVATE_COMMAND 'bash -s -- %q %q %q %q' "$RELEASE_ID" "$FRONTEND_APP_DIR" "$FRONTEND_SERVICE" "$FRONTEND_HEALTH_URL"
+          ssh portfolio-vps "$ACTIVATE_COMMAND" < deploy/activate-frontend.sh
