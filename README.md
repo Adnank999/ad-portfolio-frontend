@@ -18,6 +18,8 @@ Use Bun to install dependencies: the checked-in Fiber Timer compatibility patch 
 
 ## Production SSR
 
+For GitHub Actions testing, SSR builds, and deployment to the existing native Ubuntu systemd service, follow [frontend CI/CD setup](deploy/README.md). The automated pipeline does not use the optional frontend Docker deployment below.
+
 This is a TanStack Start application: `vite build` already compiles both browser assets and the server-rendered application. Nitro packages that SSR handler with a production Node HTTP server and static asset serving. Nitro is a deployment adapter, not a requirement for SSR itself. The configured `node_server` preset produces a standalone `.output/` directory:
 
 ```text

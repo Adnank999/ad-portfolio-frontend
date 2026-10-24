@@ -5,6 +5,7 @@ dist
 .vite
 .cache
 .git
+.deploy
 .env
 .env.*
 coverage
