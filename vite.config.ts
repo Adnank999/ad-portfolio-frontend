@@ -1,5 +1,6 @@
 import { defineConfig, normalizePath } from 'vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import { nitro } from 'nitro/vite'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import tsconfigPaths from 'vite-tsconfig-paths'
@@ -13,7 +14,7 @@ export default defineConfig(() => ({
   define: {
     'import.meta.env.VITE_LOADER_MODEL_VERSION': JSON.stringify(createHash('sha256').update(readFileSync(loaderModelFile)).digest('hex')),
   },
-  plugins: [tsconfigPaths(), tanstackStart(), react(), tailwindcss(), {
+  plugins: [tsconfigPaths(), tanstackStart(), nitro({ preset: 'node_server' }), react(), tailwindcss(), {
     name: 'reload-loading-logo',
     configureServer(server) {
       const reloadModel = (file: string) => {

@@ -2,10 +2,14 @@
   "name": "adnan-portfolio",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "start": "vite preview",
+    "start": "node .output/server/index.mjs",
+    "preview": "vite preview",
     "test": "tsc --noEmit",
     "test:unit": "bun test --preload ./tests/setup.ts ./tests"
   },
@@ -36,14 +40,15 @@
     "three": "^0.186.1"
   },
   "devDependencies": {
-    "@testing-library/react": "^16.3.0",
-    "happy-dom": "^20.0.0",
     "@tailwindcss/vite": "latest",
+    "@testing-library/react": "^16.3.0",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "@types/three": "^0.183",
     "@vitejs/plugin-react": "latest",
+    "happy-dom": "^20.0.0",
+    "nitro": "3.0.260903-beta",
     "tailwindcss": "latest",
     "typescript": "^5.7.2",
     "vite": "latest",

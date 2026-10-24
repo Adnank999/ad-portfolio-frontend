@@ -1,0 +1,16 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ad-portfolio-frontend:local
+    network_mode: host
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      HOST: 127.0.0.1
+      PORT: ${PORT:-3000}
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
