@@ -67,6 +67,15 @@ describe('site navigation and global accent', () => {
     for (const path of ['styles/homepage.css', 'styles/navbar.css']) expect(source(path)).toContain(': var(--accent);')
   })
 
+  test('keeps navigation sign-in glossy glass while auth page buttons retain the two-red gradient', () => {
+    const navigationStyles = source('components/layout/sign-in-button/sign-in-button.css')
+    expect(navigationStyles).toContain('background: linear-gradient(135deg, rgb(255 255 255 / 15%), rgb(255 255 255 / 3%)), rgb(17 19 25 / 65%);')
+    expect(navigationStyles).toContain('backdrop-filter: blur(20px);')
+    expect(navigationStyles).toContain('.site-sign-in::before')
+    expect(navigationStyles).not.toContain('background: var(--accent-text-gradient);')
+    expect(source('components/admin/admin.css')).toContain('.auth-shell .bg-accent-500 { background-image: var(--accent-text-gradient);')
+  })
+
   test('clips the two-color gradient to text without clipping badge surfaces or SVG icons', () => {
     const styles = source('styles/app.css')
     expect(styles).toContain('--accent-text-end: #7C0A02;')
