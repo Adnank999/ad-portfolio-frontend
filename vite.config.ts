@@ -7,14 +7,16 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { sourceTextures } from './vite-plugins/source-textures'
 
 const loaderModelFile = fileURLToPath(new URL('./public/loader/crimson_logo_optimized.glb', import.meta.url))
 
 export default defineConfig(() => ({
+  assetsInclude: ['**/*.ktx2'],
   define: {
     'import.meta.env.VITE_LOADER_MODEL_VERSION': JSON.stringify(createHash('sha256').update(readFileSync(loaderModelFile)).digest('hex')),
   },
-  plugins: [tsconfigPaths(), tanstackStart(), nitro({ preset: 'node_server' }), react(), tailwindcss(), {
+  plugins: [sourceTextures(), tsconfigPaths(), tanstackStart(), nitro({ preset: 'node_server' }), react(), tailwindcss(), {
     name: 'reload-loading-logo',
     configureServer(server) {
       const reloadModel = (file: string) => {

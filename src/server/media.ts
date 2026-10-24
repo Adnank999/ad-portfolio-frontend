@@ -65,6 +65,7 @@ export async function uploadMedia(request: Request): Promise<Response> {
     return Response.json({ error: 'Image upload is not permitted' }, { status: 403 })
   }
   const contentType = request.headers.get('content-type') ?? ''
+  if (contentType.startsWith('image/') && process.env.ADMIN_DIRECT_R2_UPLOAD === 'true') return Response.json({ error: 'Prepare WebP and use the direct R2 image-upload flow' }, { status: 415 })
   const video = contentType.startsWith('video/')
   if (video && !account.permissions.includes('services:write')) return Response.json({ error: 'Service media upload is not permitted' }, { status: 403 })
   const extension = extensions[contentType]

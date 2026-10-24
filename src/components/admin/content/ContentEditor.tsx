@@ -7,6 +7,8 @@ import { Input } from '@/components/admin/ui/input'
 import { Label } from '@/components/admin/ui/label'
 import { Textarea } from '@/components/admin/ui/textarea'
 import { useImageUpload } from '@/queries/assets/upload'
+import { AdminImageUploads, useAdminImageUploads } from '@/queries/assets/ImageUploadContext'
+import { ImageUploadStatus } from './ImageUploadStatus'
 import { useCreateContent, useUpdateContent } from '@/queries/content/content'
 import type { ContentDetail, ContentKind, ContentStatus, ContentWrite, JsonValue, SeoFields } from '@/server/portfolio-content'
 import { RichTextEditor, type RichTextEditorHandle } from './RichTextEditor'
@@ -41,6 +43,11 @@ const text = (value: unknown) => typeof value === 'string' ? value : ''
 const list = (value: unknown) => Array.isArray(value) ? value.map(String).join('\n') : ''
 
 export function ContentEditor({ kind, existing }: { kind: ContentKind; existing?: ContentDetail }) {
+  return <AdminImageUploads key={`${kind}:${existing?.id ?? 'new'}`} kind={kind} initialAssetIds={existing?.assetIds}><ContentEditorForm kind={kind} existing={existing} /></AdminImageUploads>
+}
+
+function ContentEditorForm({ kind, existing }: { kind: ContentKind; existing?: ContentDetail }) {
+  const imageUploads = useAdminImageUploads()
   const navigate = useNavigate()
   const { account } = useRouteContext({ from: '/admin' })
   const [document, setDocument] = useState<ContentWrite>(() => existing ? {
@@ -63,7 +70,7 @@ export function ContentEditor({ kind, existing }: { kind: ContentKind; existing?
   const create = useCreateContent(kind)
   const update = useUpdateContent(kind, existing?.id ?? '')
   const saving = create.isPending || update.isPending
-  const busy = saving || galleryUploading || primaryUploading
+  const busy = saving || galleryUploading || primaryUploading || !!imageUploads?.busy
   const error = create.error ?? update.error
   const canWrite = account.permissions.includes(`${kind}:write`)
   const canPublish = account.permissions.includes(`${kind}:publish`)
@@ -105,7 +112,7 @@ export function ContentEditor({ kind, existing }: { kind: ContentKind; existing?
       }
       const seoData = { ...document.seo }
       if (structuredDataText.trim() || document.seo?.structuredData != null) seoData.structuredData = structuredData
-      const input = { ...document, seo: seoData, fields: kind === 'case-studies' ? { ...document.fields,
+      const input = { ...document, assetIds: imageUploads?.getAssetIds() ?? document.assetIds ?? [], seo: seoData, fields: kind === 'case-studies' ? { ...document.fields,
         technologies: Array.isArray(document.fields.technologies) ? document.fields.technologies.map(String).map(value => value.trim()).filter(Boolean) : [],
         lessons: Array.isArray(document.fields.lessons) ? document.fields.lessons.map(String).map(value => value.trim()).filter(Boolean) : [],
       } : document.fields }
@@ -171,12 +178,16 @@ function Field({ label, id, children }: { label: string; id: string; children: R
 }
 
 function ImageField({ label, value, onChange, onBusyChange, disabled }: { label: string; value: string; onChange: (value: string) => void; onBusyChange: (busy: boolean) => void; disabled: boolean }) {
-  const upload = useImageUpload()
+  const upload = useImageUpload('cover')
   async function select(file: File | undefined) {
     if (!file || disabled || upload.isPending) return
     onBusyChange(true)
     try { onChange(await upload.mutateAsync(file)) } catch {}
     finally { onBusyChange(false) }
   }
-  return <div className="space-y-2"><Label htmlFor="main-image">{label}</Label><div className="flex gap-2"><Input id="main-image" disabled={disabled || upload.isPending} value={value} onChange={(event) => onChange(event.target.value)} placeholder="https://… or /images/…" required /><label className="inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-white/12 px-3 text-xs text-zinc-300 hover:bg-white/[0.06]"><UploadCloud size={15} /> {upload.isPending ? 'Uploading…' : 'Upload'}<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" className="sr-only" onChange={(event) => void select(event.target.files?.[0])} disabled={disabled || upload.isPending} /></label></div>{upload.error && <p role="alert" className="text-xs text-red-300">{upload.error.message}</p>}{value && <img src={value} alt="Selected media preview" className="mt-3 h-36 w-full rounded-lg object-cover" />}</div>
+  async function retry() {
+    onBusyChange(true)
+    try { onChange(await upload.retryLast()) } catch {} finally { onBusyChange(false) }
+  }
+  return <div className="space-y-2"><Label htmlFor="main-image">{label}</Label><div className="flex gap-2"><Input id="main-image" disabled={disabled || upload.isPending} value={value} onChange={(event) => onChange(event.target.value)} placeholder="https://… or /images/…" required /><label className="inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-white/12 px-3 text-xs text-zinc-300 hover:bg-white/[0.06]"><UploadCloud size={15} /> {upload.isPending ? 'Uploading…' : 'Upload'}<input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => { void select(event.target.files?.[0]); event.target.value = '' }} disabled={disabled || upload.isPending} /></label></div><p className="text-xs text-zinc-500">Still JPEG/PNG/WebP, up to 20 MiB. Covers use a centered 16:9 crop without stretching.</p><ImageUploadStatus upload={upload} onRetry={disabled ? undefined : () => void retry()} />{upload.error && <p role="alert" className="text-xs text-red-300">{upload.error.message}</p>}{value && <img src={value} alt="Selected media preview" className="mt-3 h-36 w-full rounded-lg object-cover" />}</div>
 }

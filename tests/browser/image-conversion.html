@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Admin image conversion checks</title></head>
+<body data-status="running"><pre id="result">Running real browser WebP conversion checks…</pre>
+<script type="module">
+import { prepareWebpImage } from '/media.js'
+
+const checks = []
+function assert(condition, name) { if (!condition) throw new Error(name); checks.push(name) }
+function encode(canvas, type) { return new Promise(resolve => canvas.toBlob(resolve, type, 0.9)) }
+async function rejects(callback, message) {
+  try { await callback() } catch (error) { assert(error.message.includes(message), message); return }
+  throw new Error(`Expected rejection: ${message}`)
+}
+
+try {
+  const canvas = document.createElement('canvas')
+  canvas.width = 800
+  canvas.height = 400
+  const context = canvas.getContext('2d')
+  context.fillStyle = '#c21e56'
+  context.fillRect(100, 100, 600, 200)
+  const source = new File([await encode(canvas, 'image/png')], 'transparent.png', { type: 'image/png' })
+  const image = await prepareWebpImage(source, 'blog_inline')
+  assert(image.file.type === 'image/webp' && image.file.name.endsWith('.webp'), 'PNG becomes actual WebP')
+  assert(image.width === 800 && image.height === 400, 'Inline images preserve ratio without upscaling')
+  const bitmap = await createImageBitmap(image.file)
+  context.clearRect(0, 0, 800, 400)
+  context.drawImage(bitmap, 0, 0)
+  bitmap.close()
+  assert(context.getImageData(0, 0, 1, 1).data[3] === 0, 'Transparent PNG alpha is preserved')
+  const repeated = await prepareWebpImage(image.file, 'service_image')
+  assert(repeated.width === 800 && repeated.height === 400, 'Existing WebP can be reencoded')
+  canvas.width = 900
+  canvas.height = 1600
+  const portraitContext = canvas.getContext('2d')
+  portraitContext.fillStyle = '#7c0a02'
+  portraitContext.fillRect(0, 0, 900, 1600)
+  const jpeg = new File([await encode(canvas, 'image/jpeg')], 'portrait.jpg', { type: 'image/jpeg' })
+  const cover = await prepareWebpImage(jpeg, 'case_study_cover')
+  assert(cover.width * 9 === cover.height * 16 && cover.width <= 900, 'Portrait JPEG uses a centered 16:9 crop without upscaling')
+  canvas.width = 3200
+  canvas.height = 1600
+  const large = new File([await encode(canvas, 'image/png')], 'large.png', { type: 'image/png' })
+  const gallery = await prepareWebpImage(large, 'project_gallery')
+  assert(gallery.width === 1600 && gallery.height === 800, 'Gallery downsizes its long side to 1600 pixels')
+  await rejects(() => prepareWebpImage(new File(['<svg/>'], 'vector.svg', { type: 'image/svg+xml' }), 'service_image'), 'still JPEG')
+  await rejects(() => prepareWebpImage(new File([], 'empty.png', { type: 'image/png' }), 'service_image'), 'nonempty')
+  const originalEncoder = HTMLCanvasElement.prototype.toBlob
+  try {
+    HTMLCanvasElement.prototype.toBlob = function(callback) { callback(new Blob(['png'], { type: 'image/png' })) }
+    await rejects(() => prepareWebpImage(source, 'blog_inline'), 'cannot encode WebP')
+  } finally { HTMLCanvasElement.prototype.toBlob = originalEncoder }
+  const controller = new AbortController()
+  controller.abort()
+  try { await prepareWebpImage(source, 'blog_inline', controller.signal); throw new Error('Cancellation failed') }
+  catch (error) { assert(error.name === 'AbortError', 'Cancellation rejects before conversion') }
+  const tiny = document.createElement('canvas')
+  tiny.width = 16
+  tiny.height = 9
+  const tinyContext = tiny.getContext('2d')
+  tinyContext.fillStyle = '#c21e56'
+  tinyContext.fillRect(0, 0, 16, 9)
+  const opaqueBytes = new Uint8Array(await (await encode(tiny, 'image/webp')).arrayBuffer())
+  tinyContext.clearRect(0, 0, 16, 9)
+  tinyContext.fillRect(4, 2, 8, 4)
+  const alphaBytes = new Uint8Array(await (await encode(tiny, 'image/webp')).arrayBuffer())
+  const hex = bytes => Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('')
+  window.mediaFixtures = { opaque: hex(opaqueBytes), alpha: hex(alphaBytes) }
+  document.body.dataset.status = 'passed'
+  document.getElementById('result').textContent = checks.map(check => `PASS: ${check}`).join('\n')
+} catch (error) {
+  document.body.dataset.status = 'failed'
+  document.getElementById('result').textContent = `FAIL: ${error.message}`
+}
+</script></body></html>

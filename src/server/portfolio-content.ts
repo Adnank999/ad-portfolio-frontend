@@ -16,6 +16,7 @@ export type SeoFields = {
   twitterImage?: string | null; noIndex?: boolean; noFollow?: boolean
 }
 export type ContentWrite = {
+  assetIds?: string[]
   slug: string; title: string; description: string; status: ContentStatus
   publishedAt?: string | null; fields: JsonObject
   editorContent?: JsonObject | null; seo?: SeoFields

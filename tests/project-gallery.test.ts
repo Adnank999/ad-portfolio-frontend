@@ -22,7 +22,7 @@ describe('project gallery uploads', () => {
   })
   test('rejects excessive counts, unsafe types, empty and oversized files before any upload', async () => {
     const upload = mock(async () => 'https://cdn.test/upload.jpg')
-    for (const files of [[], Array.from({ length: 21 }, (_, index) => image(`${index}.jpg`)), [image('valid.jpg'), image('script.svg', 'image/svg+xml')], [new File([], 'empty.jpg', { type: 'image/jpeg' })], [new File([new Uint8Array(8 * 1024 * 1024 + 1)], 'big.jpg', { type: 'image/jpeg' })]]) {
+    for (const files of [[], Array.from({ length: 21 }, (_, index) => image(`${index}.jpg`)), [image('valid.jpg'), image('script.svg', 'image/svg+xml')], [new File([], 'empty.jpg', { type: 'image/jpeg' })], [new File([new Uint8Array(20 * 1024 * 1024 + 1)], 'big.jpg', { type: 'image/jpeg' })]]) {
       await expect(uploadProjectImages(files, upload)).rejects.toThrow()
     }
     expect(upload).not.toHaveBeenCalled()

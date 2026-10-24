@@ -17,7 +17,7 @@ const uploadAsset = mock(async (file: File) => {
 })
 mock.module('@/server/ai-content', () => ({ generateAIContentFn: async ({ data }: { data: AIRequest }) => { calls.push(data); return respond(data) } }))
 mock.module('@/queries/content/content', () => ({ useCreateContent: () => ({ mutateAsync: save, isPending: false, error: null }), useUpdateContent: () => ({ mutateAsync: save, isPending: false, error: null }) }))
-mock.module('@/queries/assets/upload', () => ({ uploadImage: uploadAsset, uploadServiceMedia: uploadAsset, useImageUpload: () => ({ mutateAsync: mock(), isPending: false, error: null }) }))
+mock.module('@/queries/assets/upload', () => ({ uploadImage: uploadAsset, uploadServiceMedia: uploadAsset, useImageUpload: () => ({ mutateAsync: uploadAsset, isPending: false, error: null, stage: 'ready', prepared: null, cancel: () => {}, retryLast: async () => '' }) }))
 mock.module('@tanstack/react-router', () => ({ ...routerExports, Link: ({ to, children, ...props }: { to: string; children: React.ReactNode }) => <a href={to} {...props}>{children}</a>, useNavigate: () => async () => {}, useRouteContext: () => ({ account: { roles: [role], permissions: ['blogs:write', 'projects:write', 'case-studies:write', 'blogs:publish', 'projects:publish', 'case-studies:publish', 'services:write', 'services:publish'] } }) }))
 const { ContentEditor } = await import('../src/components/admin/content/ContentEditor')
 const { AIContentGeneratorModal } = await import('../src/components/admin/ai-content-generator/AIContentGeneratorModal')

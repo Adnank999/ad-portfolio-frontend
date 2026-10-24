@@ -1,10 +1,11 @@
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { ArrowDown, ArrowUp, Trash2, UploadCloud } from 'lucide-react'
 import { Button } from '@/components/admin/ui/button'
 import { Input } from '@/components/admin/ui/input'
 import { Label } from '@/components/admin/ui/label'
 import { maxProjectGalleryImages, projectImageTypes, type ProjectGalleryImage } from '@/lib/project-gallery'
 import { useProjectGalleryUpload } from '@/queries/assets/useProjectGalleryUpload'
+import { ImageUploadStatus } from './ImageUploadStatus'
 
 export function ProjectGalleryField({ images, onChange, onBusyChange, disabled, label = 'Project' }: {
   label?: string
@@ -16,6 +17,7 @@ export function ProjectGalleryField({ images, onChange, onBusyChange, disabled, 
   const prefix = useId()
   const upload = useProjectGalleryUpload()
   const [errors, setErrors] = useState<string[]>([])
+  const retryFiles = useRef<File[]>([])
   const locked = disabled || upload.isPending
 
   async function select(files: File[]) {
@@ -28,9 +30,10 @@ export function ProjectGalleryField({ images, onChange, onBusyChange, disabled, 
     onBusyChange(true)
     try {
       const result = await upload.mutateAsync(files)
+      retryFiles.current = files.filter(file => result.failed.some(failed => failed.name === file.name))
       if (result.uploaded.length) onChange((current) => [...current, ...result.uploaded])
       setErrors(result.failed.map((failure) => `${failure.name}: ${failure.message}`))
-    } catch (failure) { setErrors([failure instanceof Error ? failure.message : 'Image upload failed.']) }
+    } catch (failure) { retryFiles.current = files; setErrors([failure instanceof Error ? failure.message : 'Image upload failed.']) }
     finally { onBusyChange(false) }
   }
 
@@ -51,7 +54,9 @@ export function ProjectGalleryField({ images, onChange, onBusyChange, disabled, 
 
   return <section aria-labelledby={`${prefix}-heading`} className="space-y-4 rounded-xl border border-white/10 p-4 sm:p-5">
     <div className="flex flex-wrap items-center justify-between gap-3"><h3 id={`${prefix}-heading`} className="text-sm font-semibold text-white">{label} gallery <span className="ml-2 text-xs font-normal text-zinc-500">{images.length}/{maxProjectGalleryImages}</span></h3><label className={`inline-flex min-h-11 items-center gap-2 rounded-lg border border-accent-400/25 px-3 text-xs text-accent-200 focus-within:ring-2 focus-within:ring-accent-400 ${locked || images.length >= maxProjectGalleryImages ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-accent-500/10'}`}><UploadCloud size={15} /><span className="accent-text">{upload.isPending ? 'Uploading images…' : 'Upload images'}</span><input aria-label={`Upload ${label.toLowerCase()} gallery images`} type="file" multiple accept={projectImageTypes.join(',')} disabled={locked || images.length >= maxProjectGalleryImages} className="sr-only" onChange={(event) => { const files = Array.from(event.target.files ?? []); event.target.value = ''; void select(files) }} /></label></div>
-    <p className="text-xs leading-6 text-zinc-500">Select several images at once, up to 8 MB each. Add descriptive alt text, optional captions, and arrange their display order. Your primary image stays unchanged.</p>
+    <p className="text-xs leading-6 text-zinc-500">Select still JPEG/PNG/WebP images, up to 20 MiB each. Images become WebP, retain their aspect ratio, and are resized without upscaling. Your primary image stays unchanged.</p>
+    <ImageUploadStatus upload={{ ...upload.imageUpload, cancel: upload.cancel }} />
+    {errors.length > 0 && retryFiles.current.length > 0 && <Button type="button" variant="secondary" disabled={locked} onClick={() => void select(retryFiles.current)}>Retry failed images</Button>}
     {upload.isPending && <p role="status" className="text-xs text-accent-200"><span className="accent-text">Uploading selected images securely to R2. Wait before saving.</span></p>}
     {errors.length > 0 && <div role="alert" className="rounded-lg border border-red-400/20 bg-red-400/5 p-3 text-xs leading-6 text-red-200"><p>Some images could not be uploaded. Successful uploads remain in the gallery.</p><ul className="list-disc pl-4">{errors.map((error, index) => <li key={index}>{error}</li>)}</ul></div>}
     {!images.length && <p className="rounded-lg border border-dashed border-white/10 p-5 text-center text-xs text-zinc-500">No gallery images yet.</p>}

@@ -11,7 +11,8 @@
     "start": "node .output/server/index.mjs",
     "preview": "vite preview",
     "test": "tsc --noEmit",
-    "test:unit": "bun test --preload ./tests/setup.ts ./tests"
+    "test:unit": "bun test --preload ./tests/setup.ts ./tests",
+    "test:media:browser": "bun ./tests/browser/run-image-conversion.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10",

@@ -5,6 +5,7 @@ import { Bold, Italic, Underline, List, ListOrdered, Quote, ImagePlus, Link2, Ta
 import { Button } from '@/components/admin/ui/button'
 import { Input } from '@/components/admin/ui/input'
 import { useImageUpload } from '@/queries/assets/upload'
+import { ImageUploadStatus } from './ImageUploadStatus'
 import type { JsonObject } from '@/server/portfolio-content'
 
 export type RichTextEditorHandle = { getDocument: () => JsonObject | null }
@@ -20,6 +21,7 @@ export function RichTextEditor({ initialDocument, initialHtml, value, onChange, 
   const [imageAlt, setImageAlt] = useState('')
   const [linkUrl, setLinkUrl] = useState('')
   const [linkError, setLinkError] = useState('')
+  const lastImage = useRef<File | null>(null)
   const imageUpload = useImageUpload()
   const editor = useEditor({
     extensions: contentEditorExtensions(),
@@ -39,6 +41,7 @@ export function RichTextEditor({ initialDocument, initialHtml, value, onChange, 
   }) })
   async function addImage(file: File | undefined) {
     if (!file || !editor || !imageAlt.trim()) return
+    lastImage.current = file
     try {
       const source = await imageUpload.mutateAsync(file)
       editor.chain().focus().setImage({ src: source, alt: imageAlt.trim() }).run()
@@ -73,7 +76,7 @@ export function RichTextEditor({ initialDocument, initialHtml, value, onChange, 
       <select aria-label="Heading level" defaultValue="paragraph" onChange={(event) => { const level = Number(event.target.value); if (level) editor?.chain().focus().setHeading({ level: level as 2 | 3 | 4 }).run(); else editor?.chain().focus().setParagraph().run() }} className="h-10 rounded-lg bg-transparent px-2 text-xs text-zinc-300 outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="paragraph">Paragraph</option><option value="2">Heading 2</option><option value="3">Heading 3</option><option value="4">Heading 4</option></select>
     </div>
     <div className="flex flex-wrap gap-2 border-b border-white/10 p-3"><Input value={linkUrl} onChange={(event) => setLinkUrl(event.target.value)} placeholder="https://example.com" aria-label="Link URL" className="max-w-xs" /><Button type="button" variant="secondary" disabled={!linkUrl.trim()} onClick={addLink}><Link2 size={14} /> Add link</Button><Button type="button" variant="ghost" onClick={() => editor?.chain().focus().unsetLink().run()}>Remove link</Button>{linkError && <p role="alert" className="w-full text-xs text-red-300">{linkError}</p>}</div>
-    <div className="flex flex-wrap items-center gap-2 border-b border-white/10 p-3"><Input value={imageAlt} onChange={(event) => setImageAlt(event.target.value)} placeholder="Image description for accessibility" aria-label="Image alt text" className="max-w-sm" /><input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" className="sr-only" onChange={(event) => void addImage(event.target.files?.[0])} /><Button type="button" variant="secondary" disabled={!imageAlt.trim() || imageUpload.isPending} onClick={() => fileRef.current?.click()}><ImagePlus size={15} /> {imageUpload.isPending ? 'Uploading…' : 'Insert image'}</Button></div>
+    <div className="flex flex-wrap items-center gap-2 border-b border-white/10 p-3"><Input value={imageAlt} onChange={(event) => setImageAlt(event.target.value)} placeholder="Image description for accessibility" aria-label="Image alt text" className="max-w-sm" /><input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => void addImage(event.target.files?.[0])} /><Button type="button" variant="secondary" disabled={!imageAlt.trim() || imageUpload.isPending} onClick={() => fileRef.current?.click()}><ImagePlus size={15} /> {imageUpload.isPending ? 'Uploading…' : 'Insert image'}</Button><p className="w-full text-xs text-zinc-500">Still JPEG/PNG/WebP, up to 20 MiB. Converted to WebP without cropping or upscaling.</p><ImageUploadStatus upload={imageUpload} onRetry={imageAlt.trim() ? () => void addImage(lastImage.current ?? undefined) : undefined} /></div>
     {imageUpload.error && <p role="alert" className="px-4 pt-3 text-xs text-red-300">{imageUpload.error.message}</p>}
     <EditorContent editor={editor} aria-label="Article body" />
   </div>

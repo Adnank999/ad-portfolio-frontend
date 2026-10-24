@@ -47,6 +47,9 @@ jobs:
       - name: Unit tests
         run: bun run test:unit
 
+      - name: Browser WebP conversion checks
+        run: bun run test:media:browser
+
       - name: Build production SSR output
         run: |
           test -f public/loader/crimson_logo_optimized.glb
