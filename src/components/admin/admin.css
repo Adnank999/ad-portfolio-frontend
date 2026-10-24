@@ -1,5 +1,7 @@
 .admin-shell { background: #0a0a0d; color: #f4f4f5; min-height: 100vh; }
 .admin-shell h2, .admin-shell h3, .auth-shell h2 { font-family: var(--font-editorial); }
+.auth-shell .bg-accent-500 { background-image: var(--accent-text-gradient); color: var(--accent-foreground); transition: filter .2s; }
+.auth-shell .bg-accent-500:hover:not(:disabled) { filter: brightness(1.08); }
 .admin-editor .tiptap { min-height: 360px; outline: none; padding: 1.25rem; line-height: 1.8; font-size: .875rem; color: #e4e4e7; }
 .admin-editor .tiptap p { margin: .7em 0; }
 .admin-editor .tiptap h2 { font-size: 2rem; line-height: 1.1; margin: 1.4em 0 .45em; }
