@@ -44,11 +44,20 @@ jobs:
       - name: Typecheck
         run: bun run test
 
+      - name: Check shader definitions and generated contract
+        run: bun run shader:check
+
       - name: Unit tests
         run: bun run test:unit
 
       - name: Browser WebP conversion checks
         run: bun run test:media:browser
+
+      - name: Browser shader lifecycle checks
+        run: bun run test:shaders:browser
+
+      - name: Browser installed shader checks
+        run: bun run test:shaders:installed
 
       - name: Build production SSR output
         run: |

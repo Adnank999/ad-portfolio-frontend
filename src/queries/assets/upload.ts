@@ -5,7 +5,7 @@ import { prepareWebpImage, type PreparedImage } from '@/lib/media/convert-to-web
 import { ImageUploadError, mediaJson, uploadDirectImage, type CompletedAsset, type UploadStage } from '@/lib/media/direct-upload'
 import { useAdminImageUploads } from './ImageUploadContext'
 
-export async function uploadImage(file: File, options: { purpose?: ImagePurpose; signal?: AbortSignal; onStage?: (stage: UploadStage) => void; onPrepared?: (image: PreparedImage) => void; onAsset?: (asset: CompletedAsset) => void } = {}): Promise<string> {
+export async function uploadImage(file: File, options: { purpose?: ImagePurpose; requireVerified?: boolean; signal?: AbortSignal; onStage?: (stage: UploadStage) => void; onPrepared?: (image: PreparedImage) => void; onAsset?: (asset: CompletedAsset) => void } = {}): Promise<string> {
   const purpose = options.purpose ?? 'project_gallery'
   const policy = await mediaJson<{ enabled: boolean }>('policy', undefined, options.signal)
   if (policy.enabled) {
@@ -13,6 +13,7 @@ export async function uploadImage(file: File, options: { purpose?: ImagePurpose;
     options.onAsset?.(asset)
     return asset.publicUrl
   }
+  if (options.requireVerified) throw new Error('Enable direct R2 uploads on both servers to upload verified section images and shader posters. Existing image / video mode remains available for legacy uploads.')
   options.onStage?.('converting')
   const prepared = await prepareWebpImage(file, purpose, options.signal)
   options.onPrepared?.(prepared)
@@ -30,7 +31,7 @@ export async function uploadImage(file: File, options: { purpose?: ImagePurpose;
   return result.url
 }
 
-export function useImageUpload(slot: ImageSlot = 'inline') {
+export function useImageUpload(slot: ImageSlot = 'inline', { requireVerified = false }: { requireVerified?: boolean } = {}) {
   const context = useAdminImageUploads()
   const controller = useRef<AbortController | null>(null)
   const lastFile = useRef<File | null>(null)
@@ -49,7 +50,7 @@ export function useImageUpload(slot: ImageSlot = 'inline') {
       setPrepared(null)
       setStage('converting')
       try {
-        return await uploadImage(file, { purpose: imagePurpose(context?.kind ?? 'blogs', slot), signal: current.signal, onStage: setStage, onPrepared: setPrepared, onAsset: context?.register })
+        return await uploadImage(file, { purpose: imagePurpose(context?.kind ?? 'blogs', slot), requireVerified, signal: current.signal, onStage: setStage, onPrepared: setPrepared, onAsset: context?.register })
       } catch (error) {
         if (current.signal.aborted) throw new ImageUploadError(0, 'Image upload cancelled. Retry or choose another image.')
         throw error

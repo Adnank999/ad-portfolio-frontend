@@ -20,6 +20,7 @@ import { Route as ProjectsRouteRouteImport } from './routes/projects/route'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminShadersRouteImport } from './routes/admin/shaders'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as CaseStudiesIndexRouteImport } from './routes/case-studies.index'
@@ -105,6 +106,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminShadersRoute = AdminShadersRouteImport.update({
+  id: '/shaders',
+  path: '/shaders',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
@@ -284,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin/shaders': typeof AdminShadersRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/case-studies/$slug': typeof CaseStudiesSlugRoute
   '/projects/$slug': typeof ProjectsSlugRoute
@@ -326,6 +333,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin/shaders': typeof AdminShadersRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/case-studies/$slug': typeof CaseStudiesSlugRoute
   '/projects/$slug': typeof ProjectsSlugRoute
@@ -371,6 +379,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin/shaders': typeof AdminShadersRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/case-studies/$slug': typeof CaseStudiesSlugRoute
   '/projects/$slug': typeof ProjectsSlugRoute
@@ -417,6 +426,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/admin/shaders'
     | '/blog/$slug'
     | '/case-studies/$slug'
     | '/projects/$slug'
@@ -459,6 +469,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/admin/shaders'
     | '/blog/$slug'
     | '/case-studies/$slug'
     | '/projects/$slug'
@@ -503,6 +514,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/admin/shaders'
     | '/blog/$slug'
     | '/case-studies/$slug'
     | '/projects/$slug'
@@ -644,6 +656,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/shaders': {
+      id: '/admin/shaders'
+      path: '/shaders'
+      fullPath: '/admin/shaders'
+      preLoaderRoute: typeof AdminShadersRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/blog/': {
@@ -867,6 +886,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteRouteChildren {
+  AdminShadersRoute: typeof AdminShadersRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminBlogsIdRoute: typeof AdminBlogsIdRoute
   AdminBlogsNewRoute: typeof AdminBlogsNewRoute
@@ -883,6 +903,7 @@ interface AdminRouteRouteChildren {
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminShadersRoute: AdminShadersRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminBlogsIdRoute: AdminBlogsIdRoute,
   AdminBlogsNewRoute: AdminBlogsNewRoute,

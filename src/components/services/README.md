@@ -10,6 +10,8 @@ Each page explains the problem, scope, typical deliverables, acceptance checks, 
 
 `deliverables` and `preparation` are required page sections. `faqTitle` gives each FAQ section a descriptive service-specific heading. SEO falls back to the saved title and description, with optional metadata overrides in the editor. Navbar titles and descriptions are saved independently. Images and videos can replace each SVG illustration; unset slots preserve the original artwork.
 
+The service editor also supports tagged image/shader visuals for Hero, Overview, Spotlight and Articles 1–3. Each shader exposes its reviewed controls and description, without a required poster. Saved props are validated against matching frontend/backend manifests. Public pages share one active, lazy WebGL renderer with smooth fades over a plain page-colored background. Hero shaders cover the whole section; image/video layouts remain unchanged. Existing media remains compatible. See `components/shaders/README.md` for installation, schema generation and release order.
+
 Blog entries are non-interactive coming-soon cards. No article routes or common post-blog CTA/ticker sections are created. The existing application footer remains unchanged.
 
 SEO and GEO/AEO copy was checked against Google's [SEO Starter Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide) and [AI features guidance](https://developers.google.com/search/docs/appearance/ai-features). Keep descriptions of third-party discovery behavior qualified, and recheck the relevant official guidance when changing those claims.

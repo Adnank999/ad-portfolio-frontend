@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from '@tanstack/react-router'
-import { FileText, FolderKanban, LayoutDashboard, LogOut, ArrowUpRight } from 'lucide-react'
+import { FileText, FolderKanban, LayoutDashboard, LogOut, ArrowUpRight, Sparkles } from 'lucide-react'
 import { Button } from '@/components/admin/ui/button'
 import { meOptions, useLogout } from '@/queries/auth/auth'
 
@@ -20,6 +20,7 @@ const links = [
   { to: '/admin/projects', label: 'Projects', icon: FolderKanban },
   { to: '/admin/case-studies', label: 'Case studies', icon: FileText },
   { to: '/admin/services', label: 'Services', icon: FolderKanban },
+  { to: '/admin/shaders', label: 'Shaders', icon: Sparkles },
 ] as const
 
 function AdminLayout() {

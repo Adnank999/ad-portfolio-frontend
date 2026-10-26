@@ -1324,11 +1324,11 @@
   :where(.terrain-experience) .hero-copy h1 { font-size: 30px; }
 }
 :where(.terrain-experience) .case-art {
-  width: 80vw;
+  width: 92vw;
   max-width: none;
   height: auto;
   aspect-ratio: var(--case-art-aspect, 1.8);
-  max-height: 74vh;
+  max-height: 84vh;
   margin: 2vh auto 5vh;
 }
 :where(.terrain-experience) .case-hero-image,
@@ -1357,7 +1357,7 @@
 }
 :where(.terrain-experience) .case-media {
   display: grid;
-  grid-template-columns: 3fr 2fr;
+  grid-template-columns: 7fr 3fr;
   align-items: center;
   width: 100%;
   gap: 0;
@@ -1387,7 +1387,7 @@
   color: #d2e1e8;
 }
 :where(.terrain-experience) .case-media:nth-child(even) {
-  grid-template-columns: 2fr 3fr;
+  grid-template-columns: 3fr 7fr;
 }
 :where(.terrain-experience) .case-media:nth-child(even) .case-media-art {
   grid-column: 2;
@@ -1408,8 +1408,8 @@
   top: auto;
   left: auto;
   transform: none;
-  width: 60vw;
-  height: min(70vh, 650px);
+  width: 72vw;
+  height: min(78vh, 760px);
   max-width: none;
   margin-bottom: 0;
   opacity: 1;
@@ -1443,7 +1443,7 @@
 :where(.terrain-experience) .case-media-art { min-width: 0; }
 :where(.terrain-experience) .case-media[data-layout="large"] {
   display: block;
-  width: min(84vw, 1400px);
+  width: min(92vw, 1600px);
   margin: 6vh auto 12vh;
 }
 :where(.terrain-experience) .case-media[data-layout="large"] .case-media-art {
@@ -1465,7 +1465,8 @@
   object-fit: cover;
   mask-image: url('/terrain/assets/fbm-mask.webp');
   mask-mode: luminance;
-  mask-size: 100% 100%;
+  mask-size: 147.06% 147.06%;
+  mask-position: center;
   mask-repeat: no-repeat;
 }
 :where(.terrain-experience) .case-media-art[data-artwork-ready="true"] .case-image { opacity: 0; }
@@ -1491,7 +1492,7 @@
     font-size: 7px;
   }
   :where(.terrain-experience) .case-art {
-    width: 80vw;
+    width: 94vw;
     height: auto;
     margin-top: 3vh;
   }
@@ -1505,10 +1506,10 @@
   :where(.terrain-experience) .case-media:nth-child(even) .case-media-art {
     grid-column: 1;
     grid-row: 1;
-    width: 90vw;
+    width: 94vw;
     margin: auto;
   }
-  :where(.terrain-experience) .case-media[data-layout="large"] { width: 90vw; }
+  :where(.terrain-experience) .case-media[data-layout="large"] { width: 94vw; }
   :where(.terrain-experience) .case-media[data-layout="large"] .case-media-art,
   :where(.terrain-experience) .case-media[data-layout="large"] .case-image { width: 100%; }
   :where(.terrain-experience) .case-media figcaption,
@@ -1522,6 +1523,6 @@
     margin-top: 10px;
   }
   :where(.terrain-experience) .case-next-art {
-    width: 84vw;
+    width: 92vw;
   }
 }

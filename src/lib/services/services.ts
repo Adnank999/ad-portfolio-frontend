@@ -1,6 +1,7 @@
 import type { ServiceContent } from '@/components/global/service-page/servicePage.types'
 import type { JsonObject, JsonValue } from '@/server/portfolio-content'
 import pageSchema from './page-content.schema.json'
+import type { ServiceVisuals } from '@/components/shaders/types'
 
 export type ServiceMedia = { slot: string; kind: 'image' | 'video'; url: string; alt: string; poster: string; caption: string }
 export type ServiceSummary = {
@@ -9,8 +10,9 @@ export type ServiceSummary = {
   navVisual: 'orbit' | 'cube' | 'signal' | 'device' | 'grid'; navPopular: boolean; navAi: boolean
 }
 export type PublishedService = ServiceSummary & {
-  pageContent: Omit<ServiceContent, 'slug' | 'title' | 'summary' | 'category' | 'artwork' | 'faqs' | 'media'>
+  pageContent: Omit<ServiceContent, 'slug' | 'title' | 'summary' | 'category' | 'artwork' | 'faqs' | 'media' | 'visuals'>
   media: ServiceMedia[]; faqs: { question: string; answer: string }[]
+  visuals?: ServiceVisuals
   seo: { metaTitle: string; metaDescription: string; canonicalUrl: string; robots: string; ogTitle: string; ogDescription: string; ogType: string; ogImage: string; ogImageAlt: string; twitterCard: string; twitterTitle: string; twitterDescription: string; twitterImage: string }
   structuredData: JsonObject
 }

@@ -364,19 +364,16 @@ export async function mountTerrain(host,opts={}){
       distortion:rockDetail,stormUniforms:showcasePass.uniforms,reducedMotion,
       beforeCapture:time=>water.update(time,0,settings,scene.fog,projectDirection)
     });
-    composer.addPass(projectBackground);composer.addPass(showcasePass);
+    composer.addPass(projectBackground);
     projectPage=createProjectPage({host,pass:showcasePass,imageBase:ASSET,base:import.meta.env?.BASE_URL||'/',reducedMotion,onNavigate:opts.onNavigate,
       noise:atmosphere.getProjectNoise(),getArtwork:id=>atmosphere.getProjectArtwork(id),
       onProject:id=>{if(atmosphere.getSelectedProject()!==id)atmosphere.select(id,{silent:true});},
       onActive:value=>{atmosphere.setShowcaseActive(value);audio.setDetailMode(value);if(value)dragging=false;},
       onImageHover:()=>{void audio.playHover();}
     });
-    // Crucial: EffectComposer renders intermediate targets in scene-linear color.
-    // OutputPass performs ACES tone mapping and sRGB conversion on the final screen.
-    // Without it renderer.toneMappingExposure will appear ineffective.
     const outputPass=new OutputPass();
     const projectOutput=configureProjectOutput(outputPass);
-    composer.addPass(outputPass);composer.addPass(film.grainPass);
+    composer.addPass(outputPass);composer.addPass(showcasePass);composer.addPass(film.grainPass);
     frameSizing=createFrameSizing({renderer,composer,camera,fluid,water,onResize:()=>{
       mobileCameraScale=getMobileCameraScale(host.clientWidth,host.clientHeight);
       projectPage?.resize();

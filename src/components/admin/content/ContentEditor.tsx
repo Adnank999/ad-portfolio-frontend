@@ -20,6 +20,10 @@ import { ProjectGalleryField } from './ProjectGalleryField'
 import { CaseStudyFields } from '@/components/admin/case-study-fields/CaseStudyFields'
 import { ServiceFields } from '@/components/admin/service-fields/ServiceFields'
 import { assertServicePageContent, emptyServiceFields } from '@/lib/services/services'
+import { assertServiceVisuals } from '@/components/shaders/validation'
+import { backendHasShader } from '@/components/shaders/registry'
+import { shaderCatalogOptions } from '@/queries/services/shaders'
+import { useQueryClient } from '@tanstack/react-query'
 
 function defaults(kind: ContentKind): ContentWrite {
   return {
@@ -47,6 +51,7 @@ export function ContentEditor({ kind, existing }: { kind: ContentKind; existing?
 }
 
 function ContentEditorForm({ kind, existing }: { kind: ContentKind; existing?: ContentDetail }) {
+  const queryClient = useQueryClient()
   const imageUploads = useAdminImageUploads()
   const navigate = useNavigate()
   const { account } = useRouteContext({ from: '/admin' })
@@ -67,10 +72,11 @@ function ContentEditorForm({ kind, existing }: { kind: ContentKind; existing?: C
   const [validationError, setValidationError] = useState('')
   const [galleryUploading, setGalleryUploading] = useState(false)
   const [primaryUploading, setPrimaryUploading] = useState(false)
+  const [validatingShader, setValidatingShader] = useState(false)
   const create = useCreateContent(kind)
   const update = useUpdateContent(kind, existing?.id ?? '')
-  const saving = create.isPending || update.isPending
-  const busy = saving || galleryUploading || primaryUploading || !!imageUploads?.busy
+  const saving = create.isPending || update.isPending || validatingShader
+  const busy = saving || validatingShader || galleryUploading || primaryUploading || !!imageUploads?.busy
   const error = create.error ?? update.error
   const canWrite = account.permissions.includes(`${kind}:write`)
   const canPublish = account.permissions.includes(`${kind}:publish`)
@@ -102,7 +108,16 @@ function ContentEditorForm({ kind, existing }: { kind: ContentKind; existing?: C
     setSaved('')
     setValidationError('')
     try {
-      if (kind === 'services') assertServicePageContent(document.fields.pageContent)
+      if (kind === 'services') {
+        assertServicePageContent(document.fields.pageContent)
+        assertServiceVisuals(document.fields.visuals)
+        const shaders = Object.values(document.fields.visuals ?? {}).filter(visual => visual.type === 'shader')
+        if (shaders.length) {
+          setValidatingShader(true)
+          const catalog = await queryClient.fetchQuery(shaderCatalogOptions())
+          if (shaders.some(visual => !backendHasShader(catalog, visual.shader))) throw new Error('Deploy matching frontend/backend shader manifests before saving this service.')
+        }
+      }
       let structuredData = null
       if (structuredDataText.trim()) {
         try {
@@ -130,6 +145,7 @@ function ContentEditorForm({ kind, existing }: { kind: ContentKind; existing?: C
         await navigate({ to: '/admin/projects/$id', params: { id: result.id } })
       }
     } catch (error) { if (error instanceof Error) setValidationError(error.message) }
+    finally { setValidatingShader(false) }
   }
   const primaryImage = kind === 'blogs' ? 'cover' : 'image'
   const altField = kind === 'blogs' ? 'coverAlt' : 'imageAlt'

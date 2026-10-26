@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { ServiceMedia } from '../service-media/ServiceMedia';
 import type { ServiceMedia as Media } from '@/lib/services/services';
 import type { ServiceArtworkKind, ServiceItem } from "./servicePage.types";
+import type { VisualConfig } from '@/components/shaders/types';
 
 export function ServiceSection({ id, eyebrow, title, children }: { id?: string; eyebrow: string; title: string; children: ReactNode }) {
   return (
@@ -34,10 +35,10 @@ export function ServiceComparison({ before, after }: { before: string[]; after: 
   ))}</div>;
 }
 
-export function ServiceSpotlight({ kind, title, text, points, media }: { kind: ServiceArtworkKind; title: string; text: string; points: string[]; media?: Media }) {
+export function ServiceSpotlight({ kind, title, text, points, media, visual }: { kind: ServiceArtworkKind; title: string; text: string; points: string[]; media?: Media; visual?: VisualConfig }) {
   return <section className="grid items-center gap-10 py-12 md:grid-cols-2 md:gap-16 md:py-20">
     <div><p className="mb-4 text-[10px] uppercase tracking-[.2em] text-accent"><span className="accent-text">The connected view</span></p><h2 className="mb-6 text-[clamp(2.5rem,4.5vw,4rem)] leading-[1.05] [text-wrap:balance]">{title}</h2><p className="text-xs leading-[1.9] text-[#aaa6ac]">{text}</p><ul className="mt-5 space-y-2">{points.map((point) => <li key={point} className="flex gap-3 text-[11px] leading-relaxed text-[#bcb6be]"><span className="text-accent" aria-hidden="true"><span className="accent-text">↗</span></span>{point}</li>)}</ul></div>
-    <ServiceMedia media={media} artwork={kind} className="aspect-[1.4]" />
+    <ServiceMedia media={media} visual={visual} artwork={kind} className="aspect-[1.4]" />
   </section>;
 }
 

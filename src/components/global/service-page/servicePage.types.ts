@@ -1,6 +1,7 @@
 export type ServiceArtworkKind = "web" | "software" | "cloud" | "data" | "automation" | "systems" | "growth";
 export type ServiceItem = { title: string; text: string };
 export type ServiceContent = {
+  visuals?: import('@/components/shaders/types').ServiceVisuals;
   media?: import('@/lib/services/services').ServiceMedia[];
   slug: string;
   category: string;

@@ -19,5 +19,5 @@ export const Route = createFileRoute('/services/$slug')({
 
 function ServiceRoute() {
   const { service, services } = Route.useLoaderData()
-  return <ServicePage content={{ ...service.pageContent, slug: service.slug, title: service.title, summary: service.description, category: service.category, artwork: service.artwork, media: service.media, faqs: service.faqs.map(faq => ({ title: faq.question, text: faq.answer })) }} services={services} />
+  return <ServicePage content={{ ...service.pageContent, slug: service.slug, title: service.title, summary: service.description, category: service.category, artwork: service.artwork, media: service.media, visuals: service.visuals, faqs: service.faqs.map(faq => ({ title: faq.question, text: faq.answer })) }} services={services} />
 }

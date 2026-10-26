@@ -14,6 +14,7 @@ import schema from '../src/lib/services/page-content.schema.json'
 import { serviceHead, servicesIndexHead } from '../src/lib/serviceSeo'
 import { emptyServiceFields, type PublishedService } from '../src/lib/services/services'
 import { emptyField } from '../src/lib/ai-content/contracts'
+import { TestRouter } from './helpers/TestRouter'
 
 afterEach(cleanup)
 const records: ContentWrite[] = JSON.parse(readFileSync(new URL('./fixtures/services.json', import.meta.url), 'utf8'))
@@ -51,7 +52,7 @@ test('admin fields show seeded copy and edit navbar and section data', () => {
     return <ServiceFields fields={fields} onChange={(name, value) => setFields(fields => ({ ...fields, [name]: value }))} onBusyChange={() => {}} disabled={false} />
   }
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
-  render(<QueryClientProvider client={client}><Form /></QueryClientProvider>)
+  render(<TestRouter><QueryClientProvider client={client}><Form /></QueryClientProvider></TestRouter>)
   expect((screen.getByLabelText('Navbar title') as HTMLInputElement).value).toBe(records[0].fields.navTitle)
   fireEvent.change(screen.getByLabelText('Navbar description'), { target: { value: 'Edited navigation copy' } })
   expect(current.navDescription).toBe('Edited navigation copy')

@@ -3,10 +3,58 @@ import { projects } from '../src/data/projects'
 import { terrainProjects, terrainProjectPath, terrainProjectFromPath } from '../src/components/terrain-recreation/project-data'
 import { createProjectPage, getImageScrollReveal } from '../src/components/terrain-recreation/engine/project-page.js'
 import { ProjectShowcasePass } from '../src/components/terrain-recreation/engine/project-showcase.js'
+import { PROJECT_ARTWORK_DEFAULTS, PROJECT_ARTWORK_GLSL } from '../src/components/terrain-recreation/engine/project-artwork.js'
 import { readFileSync } from 'node:fs'
 import postcss from 'postcss'
 
 describe('terrain project integration', () => {
+  test('composites source-color artwork after the background-only output grade', () => {
+    const source = readFileSync(new URL('../src/components/terrain-recreation/engine/scene.js', import.meta.url), 'utf8')
+    const output = source.indexOf('composer.addPass(outputPass)')
+    const artwork = source.indexOf('composer.addPass(showcasePass)')
+    const grain = source.indexOf('composer.addPass(film.grainPass)')
+    expect(output).toBeGreaterThan(0)
+    expect(artwork).toBeGreaterThan(output)
+    expect(grain).toBeGreaterThan(artwork)
+    expect(PROJECT_ARTWORK_GLSL).toContain('sRGBTransferOETF')
+    expect(PROJECT_ARTWORK_GLSL).not.toContain('color*mask.y*2.')
+    const pass = new ProjectShowcasePass()
+    const image = document.createElement('img')
+    Object.defineProperties(image, { naturalWidth: { value: 1600 }, naturalHeight: { value: 900 } })
+    pass.setMediaImage('media:1', image)
+    const material = pass.mediaLayer.images.get('media:1')!.mesh.material
+    expect(material.fragmentShader).toContain('sRGBTransferOETF')
+    expect(material.fragmentShader).not.toContain('image*2.')
+    pass.dispose()
+  })
+
+  test('expands organic image apertures and responsive frames without changing source cropping', () => {
+    expect(PROJECT_ARTWORK_DEFAULTS.maskScale).toBeLessThan(.86)
+    expect(PROJECT_ARTWORK_DEFAULTS.edgeFadeX).toBeLessThan(.14)
+    expect(PROJECT_ARTWORK_DEFAULTS.edgeFadeY).toBeLessThan(.18)
+    expect(PROJECT_ARTWORK_DEFAULTS.circleInner).toBeGreaterThan(.32)
+    expect(PROJECT_ARTWORK_DEFAULTS.circleOuter).toBeGreaterThan(.61)
+    const css = postcss.parse(readFileSync(new URL('../src/components/terrain-recreation/terrain.css', import.meta.url), 'utf8'))
+    const declarations = (selector: string, mobile = false) => {
+      const result: Record<string, string> = {}
+      css.walkRules(selector, rule => {
+        const parent = rule.parent
+        const isMobile = parent?.type === 'atrule' && parent.params === '(max-width: 640px)'
+        if (isMobile !== mobile) return
+        rule.walkDecls(declaration => { result[declaration.prop] = declaration.value })
+      })
+      return result
+    }
+    expect(declarations(':where(.terrain-experience) .case-art').width).toBe('92vw')
+    expect(declarations(':where(.terrain-experience) .case-art')['max-height']).toBe('84vh')
+    expect(declarations(':where(.terrain-experience) .case-art', true).width).toBe('94vw')
+    expect(declarations(':where(.terrain-experience) .case-media')['grid-template-columns']).toBe('7fr 3fr')
+    expect(declarations(':where(.terrain-experience) .case-media[data-layout="large"]').width).toBe('min(92vw, 1600px)')
+    const fallback = declarations(':where(.terrain-experience) .case-media[data-layout="small"] .case-image')
+    expect(parseFloat(fallback['mask-size'])).toBeCloseTo(100 / PROJECT_ARTWORK_DEFAULTS.maskScale, 1)
+    expect(fallback['mask-position']).toBe('center')
+  })
+
   test('keeps all prototype styling inside its own route or experience scope', () => {
     const css = readFileSync(new URL('../src/components/terrain-recreation/terrain.css', import.meta.url), 'utf8')
     const root = postcss.parse(css)

@@ -15,5 +15,8 @@
     "ui": "@/components/admin/ui",
     "lib": "@/lib",
     "hooks": "@/queries"
+  },
+  "registries": {
+    "@react-bits": "https://reactbits.dev/r/{name}.json"
   }
 }

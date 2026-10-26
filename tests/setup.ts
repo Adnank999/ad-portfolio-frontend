@@ -1,4 +1,8 @@
 import { Window } from 'happy-dom'
+import { plugin } from 'bun'
+import { shaderDiscovery } from '../scripts/shaders/bun-discovery'
+
+plugin(shaderDiscovery())
 
 const browser = new Window({ url: 'http://localhost:3000' })
 const globals = ['window', 'document', 'navigator', 'HTMLElement', 'HTMLInputElement', 'HTMLTextAreaElement', 'HTMLSelectElement', 'HTMLButtonElement', 'SVGElement', 'Element', 'Node', 'NodeFilter', 'Text', 'Document', 'DocumentFragment', 'ShadowRoot', 'Event', 'CustomEvent', 'MouseEvent', 'PointerEvent', 'KeyboardEvent', 'FocusEvent', 'MutationObserver', 'ResizeObserver', 'DOMParser', 'Range', 'Selection']

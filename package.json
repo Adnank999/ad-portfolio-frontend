@@ -12,9 +12,21 @@
     "preview": "vite preview",
     "test": "tsc --noEmit",
     "test:unit": "bun test --preload ./tests/setup.ts ./tests",
-    "test:media:browser": "bun ./tests/browser/run-image-conversion.mjs"
+    "test:media:browser": "bun ./tests/browser/run-image-conversion.mjs",
+    "shader:add": "node scripts/shaders/add.mjs",
+    "shader:check": "bun scripts/shaders/manifest.ts --check",
+    "shader:manifest": "bun scripts/shaders/manifest.ts",
+    "shader:sync": "bun scripts/shaders/manifest.ts --sync-backend",
+    "test:shaders:browser": "bun ./tests/browser/run-image-conversion.mjs --shaders",
+    "test:shaders:installed": "bun ./tests/browser/run-image-conversion.mjs --installed-shaders",
+    "test:projects:browser": "bun ./tests/browser/run-image-conversion.mjs --project-artwork"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "latest",
+    "@radix-ui/react-dialog": "latest",
+    "@radix-ui/react-label": "latest",
+    "@radix-ui/react-select": "latest",
+    "@radix-ui/react-slot": "latest",
     "@react-three/drei": "^10",
     "@react-three/fiber": "^9",
     "@tanstack/react-query": "latest",
@@ -26,11 +38,6 @@
     "@tiptap/pm": "latest",
     "@tiptap/react": "latest",
     "@tiptap/starter-kit": "latest",
-    "@aws-sdk/client-s3": "latest",
-    "@radix-ui/react-dialog": "latest",
-    "@radix-ui/react-label": "latest",
-    "@radix-ui/react-select": "latest",
-    "@radix-ui/react-slot": "latest",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.24",
@@ -38,7 +45,8 @@
     "lucide-react": "^0.468.0",
     "ogl": "^1.0.11",
     "tailwind-merge": "^3.3.1",
-    "three": "^0.186.1"
+    "three": "^0.180.0",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/vite": "latest",

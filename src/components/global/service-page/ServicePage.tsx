@@ -6,6 +6,7 @@ import { projects } from "@/data/projects";
 import { ServiceArtwork } from "./ServiceArtwork";
 import { ServiceAccordion, ServiceComparison, ServiceContactLink, ServiceGrid, ServiceSection, ServiceSpotlight } from "./ServiceSections";
 import type { ServiceContent } from "./servicePage.types";
+import { ActiveShaderProvider } from '@/components/shaders/ActiveShaderProvider';
 
 const phases = ["Discover", "Diagnose", "Design", "Deliver", "Evolve"];
 
@@ -13,19 +14,22 @@ export function ServicePage({ content, services = [] }: { content: ServiceConten
   const related = services.filter((service) => service.enabled && content.related.includes(service.slug)).map(service => ({ slug: service.slug, name: service.navTitle, description: service.navDescription }));
   const media = (slot: string) => content.media?.find(media => media.slot === slot);
   const work = projects.filter((project) => content.projectSlugs?.includes(project.slug));
+  const heroVisual = content.visuals?.hero;
+  const heroShader = heroVisual?.type === 'shader';
 
   return (
-    <main className="overflow-hidden bg-[#151515] font-mono text-[#f3f0f2] selection:bg-accent/40">
+    <ActiveShaderProvider><main className="overflow-hidden bg-[#151515] font-mono text-[#f3f0f2] selection:bg-accent/40">
       <a href="#service-overview" className="sr-only fixed top-28 left-6 z-90 rounded-lg bg-accent p-4 text-sm focus:not-sr-only">Skip to service details</a>
       <section className="relative isolate flex min-h-[720px] flex-col items-center justify-center overflow-hidden px-6 pt-36 pb-20 text-center md:min-h-[800px]">
+        {heroShader && <div aria-hidden="true" data-service-hero-shader className="absolute inset-0 -z-20"><ServiceMedia visual={heroVisual} artwork={content.artwork} className="h-full w-full aspect-auto rounded-none border-0" /></div>}
         <div className="pointer-events-none absolute top-10 left-1/2 -z-20 w-[min(150%,1500px)] max-w-none -translate-x-1/2 opacity-65 md:-top-20">
-          {!media('hero') && <ServiceArtwork kind={content.artwork} className="aspect-[1.7] scale-125 border-none!" />}
+          {!media('hero') && !content.visuals?.hero && <ServiceArtwork kind={content.artwork} className="aspect-[1.7] scale-125 border-none!" />}
         </div>
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-t from-[#151515] via-[#151515]/40 to-[#151515]/25" />
         <Link to="/services" className="mb-7 inline-flex min-h-11 items-center gap-2 text-[10px] uppercase tracking-[.18em] text-[#d2b8c8] hover:text-white">Services <span aria-hidden="true">/</span> {content.category}</Link>
         <h1 className="max-w-4xl text-[clamp(3.75rem,8.5vw,8rem)] leading-[.95] [text-wrap:balance]">{content.title}</h1>
         <p className="mt-7 max-w-xl text-xs leading-[1.9] text-[#d1c6cf] md:text-sm">{content.summary}</p>
-        {media('hero') && <div className="mt-10 w-full max-w-4xl"><ServiceMedia media={media('hero')} artwork={content.artwork} /></div>}
+        {!heroShader && (media('hero') || heroVisual) && <div data-service-hero-media className="mt-10 w-full max-w-4xl"><ServiceMedia media={media('hero')} visual={heroVisual} artwork={content.artwork} eager /></div>}
         <div className="mt-8"><ServiceContactLink /></div>
         <div className="mt-9 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[9px] uppercase tracking-wider text-[#b7a9b2]"><span>Adnan Hossain Khan</span><span>Based in Bangladesh</span><span>Working remotely</span></div>
       </section>
@@ -38,7 +42,7 @@ export function ServicePage({ content, services = [] }: { content: ServiceConten
         <section id="service-overview" className="scroll-mt-28 py-12 md:py-20">
           <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
             <div><p className="mb-4 text-[10px] uppercase tracking-[.2em] text-accent"><span className="accent-text">01 / The fundamentals</span></p><h2 className="mb-6 text-[clamp(2.5rem,4.5vw,4rem)] leading-[1.05] [text-wrap:balance]">{content.overview.title}</h2><p className="text-xs leading-[1.95] text-[#aaa6ac]">{content.overview.text}</p></div>
-            <ServiceMedia media={media('overview')} artwork={content.artwork} className="aspect-[1.4]" />
+            <ServiceMedia media={media('overview')} visual={content.visuals?.overview} artwork={content.artwork} className="aspect-[1.4]" />
           </div>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">{content.overview.definitions.map((item) => <article key={item.title} className="rounded-xl bg-[#1c1c1c] p-6"><h3 className="mb-3 text-2xl">{item.title}</h3><p className="text-xs leading-[1.9] text-[#aaa6ac]">{item.text}</p></article>)}</div>
         </section>
@@ -53,7 +57,7 @@ export function ServicePage({ content, services = [] }: { content: ServiceConten
             <p className="max-w-3xl text-xs leading-[1.9] text-[#bcb6be]">{content.deliverables.acceptance}</p>
           </div>
         </ServiceSection>
-        <ServiceSpotlight kind={content.artwork} media={media('spotlight')} {...content.spotlight} />
+        <ServiceSpotlight kind={content.artwork} media={media('spotlight')} visual={content.visuals?.spotlight} {...content.spotlight} />
 
         <ServiceSection eyebrow="Where it fits" title="Built around your working environment.">
           <p className="mb-7 max-w-2xl text-xs leading-[1.9] text-[#aaa6ac]">Your users, existing tools, and day-to-day responsibilities shape the scope. These are some of the settings this service can support.</p>
@@ -82,11 +86,11 @@ export function ServicePage({ content, services = [] }: { content: ServiceConten
         <ServiceSection id="service-insights" eyebrow="From the notebook" title="Ideas worth a closer look.">
           <p className="mb-6 text-[11px] text-[#aaa6ac]">Practical guides to the decisions behind the work. These articles are in preparation.</p>
           <div className="grid gap-5 md:grid-cols-3">{content.articles.map((article, index) => <article key={article.title} className="overflow-hidden rounded-xl border border-white/10 bg-[#191919]">
-            <div className="relative"><ServiceMedia media={media(`article-${index + 1}`)} artwork={index === 0 ? content.artwork : index === 1 ? "data" : "software"} className="aspect-[1.65] rounded-none! border-none!" /><span className="pointer-events-none absolute top-3 left-3 rounded-full border border-white/10 bg-[#151515]/90 px-3 py-1 text-[9px] uppercase tracking-wider text-[#d2b8c8]">Coming soon</span></div>
+            <div className="relative"><ServiceMedia media={media(`article-${index + 1}`)} visual={content.visuals?.[`article-${index + 1}` as keyof typeof content.visuals]} artwork={index === 0 ? content.artwork : index === 1 ? "data" : "software"} className="aspect-[1.65] rounded-none! border-none!" /><span className="pointer-events-none absolute top-3 left-3 rounded-full border border-white/10 bg-[#151515]/90 px-3 py-1 text-[9px] uppercase tracking-wider text-[#d2b8c8]">Coming soon</span></div>
             <div className="p-5"><p className="mb-3 flex items-center gap-2 text-[9px] uppercase tracking-wider text-accent"><BookOpen size={12} aria-hidden="true" /><span className="accent-text">Insight / 0</span><span className="accent-text">{index + 1}</span></p><h3 className="mb-3 text-2xl leading-tight">{article.title}</h3><p className="text-[11px] leading-[1.9] text-[#aaa6ac]">{article.text}</p></div>
           </article>)}</div>
         </ServiceSection>
       </div>
-    </main>
+    </main></ActiveShaderProvider>
   );
 }

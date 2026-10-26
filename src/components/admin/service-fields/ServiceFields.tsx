@@ -1,23 +1,30 @@
 import { useId, useState } from 'react'
+import { Link } from '@tanstack/react-router'
 import { Plus, Trash2, UploadCloud } from 'lucide-react'
 import { Button } from '@/components/admin/ui/button'
 import { Input } from '@/components/admin/ui/input'
 import { Textarea } from '@/components/admin/ui/textarea'
 import { Label } from '@/components/admin/ui/label'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { uploadServiceMedia, useImageUpload } from '@/queries/assets/upload'
 import { ImageUploadStatus } from '@/components/admin/content/ImageUploadStatus'
 import type { JsonObject, JsonValue } from '@/server/portfolio-content'
 import schema from '@/lib/services/page-content.schema.json'
+import { ServiceVisualField } from '../service-visual-field/ServiceVisualField'
+import { ActiveShaderProvider } from '@/components/shaders/ActiveShaderProvider'
+import { serviceVisualSlots, type ServiceVisuals } from '@/components/shaders/types'
+import { shaderCatalogOptions } from '@/queries/services/shaders'
+import type { ServiceMedia } from '@/lib/services/services'
 
 type Schema = { type: string; properties?: Record<string, Schema>; items?: Schema }
 const label = (key: string) => key.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase())
-const slots = ['hero', 'overview', 'spotlight', 'article-1', 'article-2', 'article-3']
 
 export function ServiceFields({ fields, onChange, onBusyChange, disabled }: { fields: JsonObject; onChange: (name: string, value: JsonValue) => void; onBusyChange: (busy: boolean) => void; disabled: boolean }) {
   const [uploading, setUploading] = useState(false)
   const media = Array.isArray(fields.media) ? fields.media as JsonObject[] : []
-  return <fieldset disabled={disabled || uploading} className="space-y-6 disabled:opacity-70">
+  const visuals = (fields.visuals ?? {}) as ServiceVisuals
+  const catalog = useQuery(shaderCatalogOptions())
+  return <ActiveShaderProvider><fieldset disabled={disabled} className="space-y-6 disabled:opacity-70">
     <legend className="sr-only">Service settings</legend>
     <div className="space-y-4 rounded-xl border border-white/10 p-5">
       <h3 className="text-lg text-white">Visibility and navigation</h3>
@@ -27,13 +34,20 @@ export function ServiceFields({ fields, onChange, onBusyChange, disabled }: { fi
       <div className="space-y-2"><Label htmlFor="service-order">Navbar order</Label><Input id="service-order" type="number" min={0} max={10000} step={1} value={Number(fields.navOrder ?? 0)} onChange={event => onChange('navOrder', Number(event.target.value))} /></div>
       {([['artwork', ['web', 'software', 'cloud', 'data', 'automation', 'systems', 'growth']], ['navVisual', ['orbit', 'cube', 'signal', 'device', 'grid']]] as const).map(([name, values]) => <div key={name} className="space-y-2"><Label htmlFor={`service-${name}`}>{name === 'artwork' ? 'Fallback artwork' : 'Navbar illustration'}</Label><select id={`service-${name}`} value={String(fields[name])} onChange={event => onChange(name, event.target.value)} className="h-11 w-full rounded-lg border border-white/12 bg-[#0e0e12] px-3 text-xs text-white">{values.map(value => <option key={value}>{value}</option>)}</select></div>)}
     </div>
-    <section className="space-y-4"><h3 className="text-lg text-white">Images and video</h3><p className="text-xs leading-6 text-zinc-400">Still JPEG/PNG/WebP images (20 MiB source maximum) become WebP, without cropping or upscaling. MP4/WebM videos (64 MB) keep their existing upload path. Empty slots retain the current illustration.</p>
-      {slots.map(slot => <ServiceMediaField key={slot} slot={slot} value={media.find(item => item.slot === slot)} disabled={disabled || uploading} onBusyChange={busy => { setUploading(busy); onBusyChange(busy) }} onChange={value => onChange('media', value ? [...media.filter(item => item.slot !== slot), value] : media.filter(item => item.slot !== slot))} />)}
+    <section className="space-y-4"><h3 className="text-lg text-white">Section visuals</h3><p className="text-xs leading-6 text-zinc-400">Choose an image or shader independently for Hero, Overview, Spotlight and Articles 1–3. Shader settings are saved only with the service. Existing images and videos stay available; unset slots keep their illustration.</p>
+      <p className="text-xs leading-6 text-zinc-400">Manage global activation in <Link to="/admin/shaders" className="inline-flex min-h-11 items-center text-accent-300 underline focus-visible:outline-2">Shaders</Link> in the sidebar.</p>
+      {catalog.error && <p role="alert" className="text-xs text-red-300">Could not confirm backend shader support. {catalog.error.message} <button type="button" className="min-h-11 underline" onClick={() => void catalog.refetch()}>Retry catalog</button></p>}
+      {serviceVisualSlots.map(slot => <ServiceVisualField key={slot} slot={slot} visual={visuals[slot]} legacy={media.find(item => item.slot === slot) as ServiceMedia | undefined} backend={catalog.data} disabled={disabled || uploading} onBusyChange={busy => { setUploading(busy); onBusyChange(busy) }} onChange={(value, clearLegacy) => {
+        const next = { ...visuals }; if (value) next[slot] = value; else delete next[slot]
+        onChange('visuals', next)
+        if (clearLegacy) onChange('media', media.filter(item => item.slot !== slot))
+        else if (!value && !media.some(item => item.slot === slot)) onChange('media', [...media, { slot, kind: 'image', url: '', alt: '', poster: '', caption: '' }])
+      }} renderLegacy={() => <ServiceMediaField slot={slot} value={media.find(item => item.slot === slot)} disabled={disabled || uploading} onBusyChange={busy => { setUploading(busy); onBusyChange(busy) }} onChange={value => onChange('media', value ? [...media.filter(item => item.slot !== slot), value] : media.filter(item => item.slot !== slot))} />} />)}
     </section>
     <section className="space-y-4"><h3 className="text-lg text-white">Page sections</h3><p className="text-xs leading-6 text-zinc-400">The current page content is prefilled below. Edit individual sections or generate a complete draft with AI.</p>
       {Object.entries(schema.properties).map(([name, definition]) => <details key={name} className="rounded-xl border border-white/10 p-4"><summary className="min-h-11 cursor-pointer text-sm text-white">{label(name)}</summary><div className="mt-4"><SectionField name={name} schema={definition as Schema} value={(fields.pageContent as JsonObject)?.[name]} onChange={value => onChange('pageContent', { ...(fields.pageContent as JsonObject), [name]: value })} /></div></details>)}
     </section>
-  </fieldset>
+  </fieldset></ActiveShaderProvider>
 }
 
 function empty(schema: Schema): JsonValue {

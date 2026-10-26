@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 
 export const PROJECT_ARTWORK_DEFAULTS = Object.freeze({ hoverIn: 1, hoverOut: 1.5, imageZoom: .06, radiusGrowth: .07,
-  distortion: .12, maskRadius: .5, maskSoftness: .28, noiseAmount: .35, noiseSpeed: .05, revealDuration: 1.4 });
+  distortion: .12, maskRadius: .5, maskSoftness: .28, noiseAmount: .35, noiseSpeed: .05, revealDuration: 1.4,
+  maskScale: .68, edgeFadeX: .06, edgeFadeY: .08, circleInner: .4, circleOuter: .76 });
 
 export function createProjectMasks(erosion, reveal) {
   const make = (pixels, name) => {
@@ -81,7 +82,7 @@ export const PROJECT_ARTWORK_GLSL = `
     return coverUv(point,size,aspect);
   }
   float artworkReveal(vec2 local,float progress,vec2 displacement){
-    vec2 point=(local-.5)*.86+.5+displacement*.4;
+    vec2 point=(local-.5)*${PROJECT_ARTWORK_DEFAULTS.maskScale}+.5+displacement*.4;
     float silhouette=texture2D(uRevealMask,point).r;
     float erosion=texture2D(uErosionMask,point).r;
     float field=silhouette*.82+erosion*.18;
@@ -89,7 +90,7 @@ export const PROJECT_ARTWORK_GLSL = `
     return smoothstep(threshold-.12,threshold+.12,field);
   }
   vec3 artworkMask(vec2 local,vec2 size,float progress,float hover,float shape,float time,vec2 displacement){
-    vec2 point=(local-.5)*.86/(1.+hover*.07)+.5;
+    vec2 point=(local-.5)*${PROJECT_ARTWORK_DEFAULTS.maskScale}/(1.+hover*.07)+.5;
     float drift=projectSimplex(vec3(local*3.,time*.05+hover*.05));
     point+=displacement*(.45+hover*.25);
     float density=texture2D(uRevealMask,point).r;
@@ -98,9 +99,9 @@ export const PROJECT_ARTWORK_GLSL = `
     density+=(erosion*.42+drift*.035)*transitionBand;
     float mask=smoothstep(.015,.985,density);
     vec2 boundary=min(local,1.-local);
-    float frame=smoothstep(0.,.14,boundary.x)*smoothstep(0.,.18,boundary.y);
+    float frame=smoothstep(0.,${PROJECT_ARTWORK_DEFAULTS.edgeFadeX},boundary.x)*smoothstep(0.,${PROJECT_ARTWORK_DEFAULTS.edgeFadeY},boundary.y);
     vec2 radial=local-.5;radial.x*=size.x*uViewportSize.x/max(size.y*uViewportSize.y,1.);
-    float circle=1.-smoothstep(.32,.61+hover*.035,length(radial));
+    float circle=1.-smoothstep(${PROJECT_ARTWORK_DEFAULTS.circleInner},${PROJECT_ARTWORK_DEFAULTS.circleOuter}+hover*.035,length(radial));
     mask*=frame*mix(1.,circle,shape);
     float reveal=artworkReveal(local,progress,displacement);
     float rim=4.*mask*(1.-mask);
@@ -114,7 +115,7 @@ export const PROJECT_ARTWORK_GLSL = `
     return mask*mix(shadowVisibility,1.,core);
   }
   vec3 artworkOver(vec3 background,vec3 color,vec3 mask,float weight){
-    vec3 image=color*mask.y*2.;
+    vec3 image=sRGBTransferOETF(vec4(max(color,vec3(0.)),1.)).rgb*mask.y;
     float alpha=artworkAlpha(image,mask.x)*weight;
     return mix(background,image,alpha);
   }

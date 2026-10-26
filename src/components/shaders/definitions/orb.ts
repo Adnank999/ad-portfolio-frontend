@@ -1,0 +1,45 @@
+import { z as schema } from 'zod'
+import type { ShaderDefinition } from '../types'
+
+export const definition = {
+  id: 'orb', name: 'Orb', version: 1, status: 'ready', source: '@react-bits/Orb-TS-TW (existing reviewed source)',
+  schema: schema.strictObject({
+    colors: schema.array(schema.string().regex(/^#[0-9a-fA-F]{6}$/)).length(3),
+    backgroundColor: schema.string().regex(/^#[0-9a-fA-F]{6}$/),
+    hue: schema.number().min(0).max(360), size: schema.number().min(0.2).max(2),
+    glow: schema.number().min(0.1).max(3), bleed: schema.number().min(0).max(3),
+    wobble: schema.number().min(0).max(2), highlight: schema.number().min(0).max(2), trail: schema.number().min(0).max(2),
+    tiltX: schema.number().min(-45).max(45), tiltY: schema.number().min(-45).max(45),
+    speed: schema.number().min(0).max(2), hoverIntensity: schema.number().min(0).max(2),
+    rotateOnHover: schema.boolean(), forceHoverState: schema.boolean(), followCursor: schema.boolean(),
+    clickPulse: schema.boolean(), intro: schema.boolean(), opacity: schema.number().min(0).max(1),
+  }),
+  defaults: {
+    colors: ['#C21E56', '#7C0A02', '#160009'], backgroundColor: '#191919', hue: 0, size: 1,
+    glow: 1, bleed: 1, wobble: 1, highlight: 1, trail: 1, tiltX: 0, tiltY: 0, speed: 0.8,
+    hoverIntensity: 0.5, rotateOnHover: true, forceHoverState: false, followCursor: true,
+    clickPulse: true, intro: false, opacity: 1,
+  },
+  controls: [
+    { kind: 'color-list', key: 'colors', label: 'Orb colors', minItems: 3, maxItems: 3 },
+    { kind: 'color', key: 'backgroundColor', label: 'Background color' },
+    { kind: 'slider', key: 'hue', label: 'Hue', min: 0, max: 360, step: 1 },
+    { kind: 'slider', key: 'size', label: 'Size', min: 0.2, max: 2, step: 0.05 },
+    { kind: 'slider', key: 'glow', label: 'Glow', min: 0.1, max: 3, step: 0.1 },
+    { kind: 'slider', key: 'bleed', label: 'Bleed', min: 0, max: 3, step: 0.1 },
+    { kind: 'slider', key: 'wobble', label: 'Wobble', min: 0, max: 2, step: 0.1 },
+    { kind: 'slider', key: 'highlight', label: 'Highlight', min: 0, max: 2, step: 0.1 },
+    { kind: 'slider', key: 'trail', label: 'Trail', min: 0, max: 2, step: 0.1 },
+    { kind: 'slider', key: 'tiltX', label: 'Horizontal tilt', min: -45, max: 45, step: 1 },
+    { kind: 'slider', key: 'tiltY', label: 'Vertical tilt', min: -45, max: 45, step: 1 },
+    { kind: 'slider', key: 'speed', label: 'Speed', min: 0, max: 2, step: 0.05 },
+    { kind: 'slider', key: 'hoverIntensity', label: 'Hover intensity', min: 0, max: 2, step: 0.1 },
+    { kind: 'toggle', key: 'rotateOnHover', label: 'Rotate on hover' },
+    { kind: 'toggle', key: 'forceHoverState', label: 'Always show hover effect' },
+    { kind: 'toggle', key: 'followCursor', label: 'Follow cursor' },
+    { kind: 'toggle', key: 'clickPulse', label: 'Pulse on click' },
+    { kind: 'toggle', key: 'intro', label: 'Intro animation' },
+    { kind: 'slider', key: 'opacity', label: 'Opacity', min: 0, max: 1, step: 0.05 },
+  ],
+  load: () => import('../adapters/OrbAdapter'),
+} satisfies ShaderDefinition

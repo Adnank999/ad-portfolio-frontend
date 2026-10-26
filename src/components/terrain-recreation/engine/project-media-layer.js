@@ -43,10 +43,10 @@ export class ProjectMediaLayer {
         void main(){
           vec2 displacement=artworkDisplacement(vUv,uSize,uHover);
           vec2 imageUv=artworkUv(vUv,uSize,uAspect,uHover,displacement);
-          vec3 image=texture2D(uArtwork,imageUv).rgb;
+          vec3 image=sRGBTransferOETF(vec4(texture2D(uArtwork,imageUv).rgb,1.)).rgb;
           vec3 mask=artworkMask(vUv,uSize,uReveal,uHover,1.,uTime,displacement);
-          float alpha=artworkAlpha(image*2.,mask.x)*uWeight;
-          gl_FragColor=vec4(image*2.*mask.y,alpha);
+          float alpha=artworkAlpha(image,mask.x)*uWeight;
+          gl_FragColor=vec4(image*mask.y,alpha);
         }`,
     });
     const mesh = new THREE.Mesh(this.geometry, material);
