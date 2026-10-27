@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { LoaderPreload } from "@/components/feedback/LoaderPreload";
 import { RouteNotFound } from "@/components/feedback/PageNotFound";
 import {
   createRootRouteWithContext,
@@ -84,7 +83,6 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <LoaderPreload />
         {children}
         <Scripts />
       </body>

@@ -28,28 +28,9 @@
 .page-feedback-orbit::after { position: absolute; top: -3px; left: 50%; width: 5px; height: 5px; border-radius: 50%; background: #ed94b2; box-shadow: 0 0 14px var(--accent, #C21E56); content: ''; }
 .page-feedback-core { position: absolute; inset: 67px; border-radius: 50%; background: var(--accent-text-gradient, linear-gradient(110deg, #C21E56, #7C0A02)); box-shadow: 0 0 24px rgb(var(--accent-rgb, 194 30 86) / .45); animation: feedback-breathe 2.4s ease-in-out infinite; }
 .page-feedback--loading::before { background: radial-gradient(ellipse at 50% 42%, #c21e5614, transparent 48%); }
-.loading-logo { position: relative; width: min(360px, 100%); aspect-ratio: 1; margin: 0 auto 30px; }
-.loading-logo-aura { position: absolute; inset: 2%; border-radius: 50%; background: radial-gradient(ellipse, #ed397535, #c21e561c 42%, transparent 72%); }
-.loading-logo-model { position: absolute; inset: 0; filter: drop-shadow(0 0 5px #ff75a6aa) drop-shadow(0 0 20px #ed397580); }
-.loading-logo-model canvas, .loading-logo-fallback, .loading-logo-poster { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
-.loading-logo-model[data-has-poster='true'] .loading-logo-fallback { opacity: 0; }
-.loading-logo-model:has(canvas[data-model-state='ready']) .loading-logo-poster { opacity: 0; }
-.loading-logo-model canvas, .loading-logo-fallback { transition: opacity .16s ease-out; }
-.loading-logo-model canvas { opacity: 0; }
-.loading-logo-fallback { opacity: 1; }
-.loading-logo-model canvas[data-render-state='ready'] { opacity: 1; }
-.loading-logo-model canvas[data-render-state='ready'] + .loading-logo-fallback { opacity: 0; }
-.loading-logo-ring-highlight { animation: loading-logo-ring-light 6.25s linear infinite; filter: drop-shadow(0 0 3px #ff4588); }
-.loading-logo-model canvas[data-render-state='ready'] + .loading-logo-fallback .loading-logo-ring-highlight { animation-name: none; }
-.loading-logo-sparks { position: absolute; inset: -4%; pointer-events: none; }
-.loading-logo-sparks i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #ff75a6; box-shadow: 0 0 6px #ff4588; opacity: .15; animation: feedback-spark 4s ease-in-out infinite; }
-.loading-logo-sparks i:nth-child(5n) { width: 3px; height: 3px; box-shadow: 0 0 9px #ff4588; }
-.loading-logo-reflection { position: absolute; right: 20%; bottom: -6px; left: 20%; height: 22px; border-radius: 50%; background: radial-gradient(ellipse, #f24e8933, transparent 68%); transform: scaleY(.45); }
-.loading-logo-reflection::after { position: absolute; top: 50%; right: -25%; left: -25%; height: 1px; background: linear-gradient(90deg, transparent, #ff75a64a, transparent); content: ''; }
+.page-feedback--loading::after { position: absolute; z-index: 1; inset: 0; content: ''; pointer-events: none; opacity: .075; mix-blend-mode: screen; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch' seed='11'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Cpath fill='%23fff' filter='url(%23grain)' d='M0 0h160v160H0z'/%3E%3C/svg%3E"); background-size: 160px 160px; }
 .page-feedback-status { margin: 0; color: #ffa0c0; font: 400 13px/1.8 var(--font-body, 'Inter', sans-serif); letter-spacing: .36em; text-indent: .36em; text-shadow: 0 0 10px #ff458877, 0 0 26px #c21e5666; text-wrap: balance; }
 .page-feedback-status[data-long-message] { font-size: 12px; letter-spacing: .055em; text-indent: .055em; }
-.page-feedback-track { position: relative; width: min(260px, 78%); height: 7px; margin: 24px auto 0; overflow: hidden; border: 1px solid #ff75a66b; border-radius: 6px; background: #210812; box-shadow: 0 0 7px #f24e8933, 0 0 22px #c21e5622; }
-.page-feedback-track i { display: block; width: 45%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #a30e40, #f34c87 45%, #ffb0cb); box-shadow: 0 0 8px #ff75a6; animation: feedback-track 2.6s ease-in-out infinite alternate; }
 .page-feedback-eyebrow { margin: 0 0 18px; color: #df91ac; font: 400 10px/1.5 var(--font-body, 'Inter', sans-serif); letter-spacing: .18em; text-transform: uppercase; }
 .page-feedback h1, .page-feedback h2 { margin: 0; font-size: clamp(36px, 5vw, 64px); line-height: 1.08; letter-spacing: -.035em; text-wrap: balance; }
 .page-feedback-description { max-width: 350px; margin: 22px auto 0; color: #a8a0aa; font: 400 13px/1.9 var(--font-body, 'Inter', sans-serif); text-wrap: pretty; }
@@ -69,20 +50,12 @@
 .page-feedback--panel .loading-logo { width: min(220px, 100%); margin-bottom: 20px; }
 @keyframes feedback-orbit { to { transform: rotate(360deg); } }
 @keyframes feedback-breathe { 50% { opacity: .4; transform: scale(.65); } }
-@keyframes feedback-track { from { transform: translateX(-20%); } to { transform: translateX(145%); } }
-@keyframes feedback-spark { 0%, 100% { opacity: .12; } 50% { opacity: .75; } }
-@keyframes loading-logo-ring-light { to { stroke-dashoffset: -1; } }
 @media (prefers-reduced-motion: reduce) {
-  .page-feedback *, .page-feedback *::after { animation: none; transition: none; }
-  .page-feedback :is(.page-feedback-track i, .loading-logo-sparks i, .page-feedback-orbit, .page-feedback-core) { animation-name: none; }
-  .page-feedback .loading-logo-ring-highlight { animation-name: none; }
-  .page-feedback :is(.loading-logo-model canvas, .loading-logo-fallback) { transition: none; }
-  .page-feedback-track i { width: 45%; }
+  .page-feedback *, .page-feedback *::before, .page-feedback *::after { animation: none; transition: none; }
 }
 @media (forced-colors: active) {
+  .page-feedback--loading::after { display: none; }
   .page-feedback-orbit i, .page-feedback-actions button { border: 1px solid CanvasText; }
-  .page-feedback-core, .page-feedback-track i { background: CanvasText; }
-  .loading-logo-model { filter: none; }
-  .loading-logo-fallback path { fill: CanvasText; stroke: CanvasText; }
+  .page-feedback-core { background: CanvasText; }
   .page-feedback-status { color: CanvasText; text-shadow: none; }
 }

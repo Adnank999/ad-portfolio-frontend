@@ -29,8 +29,9 @@ test('public data fallbacks share a lightweight loading experience without fabri
   expect(container.firstElementChild?.getAttribute('aria-busy')).toBe('true')
   expect(container.querySelector('.loading-logo')?.getAttribute('aria-hidden')).toBe('true')
   expect(screen.queryByRole('progressbar')).toBeNull()
-  expect(container.querySelector('canvas')).toBeTruthy()
-  expect(container.querySelector('.loading-logo-fallback')).toBeTruthy()
+  expect(container.querySelector('canvas')).toBeNull()
+  expect(container.querySelector('.loading-logo-artwork')).toBeTruthy()
+  expect(container.querySelector('.page-feedback-track')).toBeNull()
 })
 
 test('error feedback offers safe recovery and a home link without needing router context', async () => {

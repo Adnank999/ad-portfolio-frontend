@@ -4,6 +4,7 @@ import { PerformanceMonitor } from '@react-three/drei/core/PerformanceMonitor'
 import { useMotionValueEvent, type MotionValue } from 'framer-motion'
 import { Color, ShaderMaterial } from 'three'
 import { HeroShader } from './shaders-glsl/HeroShader'
+import { useHeroShaderVisibility } from './hooks/useHeroShaderVisibility'
 import { ValueParticles } from './cinematic/value/ValueParticles'
 import type { HeroShaderControls } from './shaders-glsl/ShaderControls'
 import inkVertex from './shaders/inkVertex.glsl?raw'
@@ -35,7 +36,7 @@ export type CinematicSceneProps = {
   heroControls: HeroShaderControls
 }
 
-function CinematicScene(props: CinematicSceneProps & { heroVisible: boolean; experimentVisible: boolean; experimentRequested: boolean; lowQuality: boolean }) {
+function CinematicScene(props: CinematicSceneProps & { heroVisible: boolean; heroMounted: boolean; heroRequested: boolean; experimentVisible: boolean; experimentRequested: boolean; lowQuality: boolean }) {
   const { reveal, reverse, heroProgress, experimentProgress, pointerX, pointerY, burst, time, still, compact, heroVisible, experimentVisible, lowQuality } = props
   const uniforms = useMemo<InkUniforms>(() => ({
     uReveal: { value: 0 }, uReverse: { value: 0 }, uAspect: { value: 1 },
@@ -44,6 +45,10 @@ function CinematicScene(props: CinematicSceneProps & { heroVisible: boolean; exp
   }), [])
   const ink = useRef<ShaderMaterial>(null)
   const { size, invalidate } = useThree()
+
+  useFrame((_, delta) => {
+    if (!still && !document.hidden && (heroVisible || experimentVisible)) time.set(time.get() + Math.min(.045, delta) * 1000)
+  }, -2)
 
   useMotionValueEvent(reveal, 'change', value => {
     if (ink.current) ink.current.uniforms.uReveal.value = value
@@ -73,21 +78,24 @@ function CinematicScene(props: CinematicSceneProps & { heroVisible: boolean; exp
       <planeGeometry args={[2, 2]} />
       <shaderMaterial ref={ink} uniforms={uniforms} vertexShader={inkVertex} fragmentShader={inkFragment} depthTest={false} depthWrite={false} toneMapped={false} />
     </mesh>}
-    <HeroShader time={time} progress={heroProgress} heroRef={props.heroRef} visible={heroVisible} still={still} compact={compact || lowQuality} onReady={props.onHeroReady} controls={props.heroControls} />
+    {(props.heroRequested || props.heroMounted) && <HeroShader time={time} progress={heroProgress} heroRef={props.heroRef} allocated={props.heroMounted} visible={heroVisible} still={still} compact={compact || lowQuality} onReady={props.onHeroReady} controls={props.heroControls} />}
     {props.experimentRequested && <ValueParticles sectionRef={props.experimentRef} compact={compact || lowQuality} visible={experimentVisible} still={still} progress={experimentProgress} pointerX={pointerX} pointerY={pointerY} burst={burst} time={time} />}
   </>
 }
 
 export default function CinematicCanvas(props: CinematicSceneProps & { onUnavailable: () => void }) {
   const [supported, setSupported] = useState(false)
-  const [heroVisible, setHeroVisible] = useState(true)
   const [experimentVisible, setExperimentVisible] = useState(false)
   const [experimentRequested, setExperimentRequested] = useState(false)
   const [documentVisible, setDocumentVisible] = useState(true)
+  const { visible: heroVisible, mounted: heroMounted } = useHeroShaderVisibility(props.heroRef, supported && documentVisible)
+  const [heroRequested, setHeroRequested] = useState(false)
   const [lowQuality, setLowQuality] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const invalidateRef = useRef<(() => void) | null>(null)
   const continuous = !props.still && documentVisible && (heroVisible || experimentVisible)
+
+  useEffect(() => { if (heroMounted) setHeroRequested(true) }, [heroMounted])
 
   useEffect(() => {
     if (!supported || !props.compact || !continuous) return
@@ -106,24 +114,21 @@ export default function CinematicCanvas(props: CinematicSceneProps & { onUnavail
   }, [props.onUnavailable])
 
   useEffect(() => {
-    const hero = props.heroRef.current
     const experiment = props.experimentRef.current
     const observer = new IntersectionObserver(entries => {
       for (const entry of entries) {
-        if (entry.target === hero) setHeroVisible(entry.isIntersecting)
         if (entry.target === experiment) {
           setExperimentVisible(entry.isIntersecting)
           if (entry.isIntersecting) setExperimentRequested(true)
         }
       }
     })
-    if (hero) observer.observe(hero)
     if (experiment) observer.observe(experiment)
     const update = () => setDocumentVisible(!document.hidden)
     update()
     document.addEventListener('visibilitychange', update)
     return () => { observer.disconnect(); document.removeEventListener('visibilitychange', update) }
-  }, [props.heroRef, props.experimentRef])
+  }, [props.experimentRef])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -134,11 +139,10 @@ export default function CinematicCanvas(props: CinematicSceneProps & { onUnavail
   }, [supported, props.onUnavailable])
 
   if (!supported) return null
-  return <div className="cinema-webgl" aria-hidden="true">
+  return <div className="cinema-webgl" data-hero-visible={heroVisible} data-hero-allocated={heroMounted} aria-hidden="true">
     <Canvas ref={canvasRef} onCreated={({ invalidate, gl }) => { invalidateRef.current = invalidate; gl.setClearColor('#171717', 1) }} camera={{ position: [0, 0, 5], fov: 45 }} dpr={props.compact || lowQuality ? 1 : [1, 1.5]} frameloop={continuous && !props.compact ? 'always' : 'demand'} gl={{ alpha: false, antialias: !props.compact, powerPreference: props.compact ? 'low-power' : 'high-performance' }} fallback={null}>
-      <PerformanceMonitor onDecline={() => setLowQuality(true)} flipflops={1} onFallback={() => setLowQuality(true)}>
-        <CinematicScene {...props} heroVisible={heroVisible} experimentVisible={experimentVisible} experimentRequested={experimentRequested} lowQuality={lowQuality} />
-      </PerformanceMonitor>
+      {continuous && <PerformanceMonitor onDecline={() => setLowQuality(true)} flipflops={1} onFallback={() => setLowQuality(true)} />}
+      <CinematicScene {...props} heroVisible={heroVisible} heroMounted={heroMounted} heroRequested={heroRequested} experimentVisible={experimentVisible} experimentRequested={experimentRequested} lowQuality={lowQuality} />
     </Canvas>
   </div>
 }

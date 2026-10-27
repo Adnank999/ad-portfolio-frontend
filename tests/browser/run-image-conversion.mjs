@@ -5,9 +5,11 @@ import { join, resolve, sep } from 'node:path'
 import { shaderDiscovery } from '../../scripts/shaders/bun-discovery'
 
 const shaders = process.argv.includes('--shaders')
+const loader = process.argv.includes('--loader')
 const installedShaders = process.argv.includes('--installed-shaders')
 const projectArtwork = process.argv.includes('--project-artwork')
-const graphics = shaders || installedShaders || projectArtwork
+const homeShader = process.argv.includes('--home-shader')
+const graphics = shaders || installedShaders || projectArtwork || homeShader
 const nativeGpu = process.argv.includes('--native-gpu')
 
 const browser = process.env.CHROME_BIN ?? (process.platform === 'win32'
@@ -17,26 +19,46 @@ if (!browser) throw new Error('Set CHROME_BIN to an existing Chrome/Chromium/Edg
 const temporaryRoot = realpathSync(tmpdir())
 const profile = mkdtempSync(join(temporaryRoot, 'portfolio-image-browser-'))
 if (!resolve(profile).startsWith(`${resolve(temporaryRoot)}${sep}portfolio-image-browser-`)) throw new Error('Unsafe temporary browser profile path')
-const bundle = await Bun.build({ entrypoints: [installedShaders ? './tests/browser/shader-library.tsx' : shaders ? './tests/browser/shader-runtime.tsx' : projectArtwork ? './tests/browser/project-artwork.ts' : './src/lib/media/convert-to-webp.ts'], target: 'browser', write: false, plugins: shaders || installedShaders ? [shaderDiscovery()] : [] })
+const homeRoot = resolve('src/components/home')
+const homeAssets = {
+  name: 'homepage-shader-assets',
+  setup(build) {
+    build.onResolve({ filter: /\.(?:glsl|ktx2|jpg|png|wasm|js)\?(?:raw|url)$|\.(?:jpg|png)$/ }, args => {
+      const [relative, query] = args.path.split('?')
+      const path = resolve(args.resolveDir, relative)
+      if (!path.startsWith(homeRoot + sep)) throw new Error('Unexpected homepage shader fixture asset')
+      return { path, namespace: query === 'raw' ? 'home-shader-source' : 'home-shader-asset' }
+    })
+    build.onLoad({ filter: /.*/, namespace: 'home-shader-source' }, args => ({ contents: `export default ${JSON.stringify(readFileSync(args.path, 'utf8'))}`, loader: 'js' }))
+    build.onLoad({ filter: /.*/, namespace: 'home-shader-asset' }, args => ({ contents: `export default ${JSON.stringify('/home-shader-assets/' + args.path.slice(homeRoot.length + 1).replaceAll('\\', '/'))}`, loader: 'js' }))
+  },
+}
+const bundle = await Bun.build({ entrypoints: [homeShader ? './tests/browser/home-shader.tsx' : loader ? './tests/browser/loading-logo.tsx' : installedShaders ? './tests/browser/shader-library.tsx' : shaders ? './tests/browser/shader-runtime.tsx' : projectArtwork ? './tests/browser/project-artwork.ts' : './src/lib/media/convert-to-webp.ts'], target: 'browser', write: false, plugins: homeShader ? [homeAssets] : shaders || installedShaders ? [shaderDiscovery()] : [] })
 if (!bundle.success) throw new Error('Image conversion browser bundle failed')
 const server = Bun.serve({
   hostname: '127.0.0.1', port: 0,
   fetch(request) {
+    const pathname = new URL(request.url).pathname
+    if (homeShader && pathname.startsWith('/home-shader-assets/')) {
+      const path = resolve(homeRoot, pathname.slice('/home-shader-assets/'.length))
+      return path.startsWith(homeRoot + sep) && existsSync(path) ? new Response(Bun.file(path)) : new Response('Not found', { status: 404 })
+    }
+    if (loader && pathname === '/loader.css' || homeShader && pathname === '/home-shader.css') return new Response(bundle.outputs.find(output => output.path.endsWith('.css')), { headers: { 'content-type': 'text/css' } })
     if (projectArtwork && new URL(request.url).pathname === '/project-artwork-mask.webp') return new Response(Bun.file('./public/terrain/assets/fbm-mask.webp'))
     return new URL(request.url).pathname === '/media.js'
       ? new Response(bundle.outputs[0], { headers: { 'content-type': 'text/javascript' } })
-      : new Response(Bun.file(shaders || installedShaders ? './tests/browser/shader-runtime.html' : projectArtwork ? './tests/browser/project-artwork.html' : './tests/browser/image-conversion.html'))
+      : new Response(Bun.file(homeShader ? './tests/browser/home-shader.html' : loader ? './tests/browser/loading-logo.html' : shaders || installedShaders ? './tests/browser/shader-runtime.html' : projectArtwork ? './tests/browser/project-artwork.html' : './tests/browser/image-conversion.html'))
   },
 })
 try {
-  const child = spawn(browser, ['--headless=new', ...(graphics ? ['--window-size=1280,900', ...(nativeGpu ? [] : ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'])] : ['--disable-gpu']), '--disable-background-networking', '--disable-extensions', '--no-first-run', `--user-data-dir=${profile}`, '--remote-debugging-port=0', '--remote-debugging-address=127.0.0.1', String(server.url)], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
+  const child = spawn(browser, ['--headless=new', ...(loader ? [process.argv.includes('--mobile') ? '--window-size=390,844' : '--window-size=1280,900', ...(process.argv.includes('--reduced-motion') ? ['--force-prefers-reduced-motion'] : [])] : []), ...(graphics ? [homeShader ? '--window-size=640,720' : '--window-size=1280,900', ...(nativeGpu ? [] : ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'])] : ['--disable-gpu']), '--disable-background-networking', '--disable-extensions', '--no-first-run', `--user-data-dir=${profile}`, '--remote-debugging-port=0', '--remote-debugging-address=127.0.0.1', String(server.url)], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
   child.stdout.resume()
   child.stderr.resume()
   let closed = false
   let launchError
   const exited = new Promise(resolveExit => child.once('close', () => { closed = true; resolveExit() }))
   child.once('error', error => { launchError = error })
-  const timer = setTimeout(() => child.kill(), installedShaders ? 180_000 : 45_000)
+  const timer = setTimeout(() => child.kill(), installedShaders ? 180_000 : homeShader ? 90_000 : 45_000)
   let socket
   try {
     const wait = milliseconds => new Promise(resolveWait => setTimeout(resolveWait, milliseconds))
@@ -57,7 +79,7 @@ try {
     await new Promise((resolveOpen, reject) => { socket.onopen = resolveOpen; socket.onerror = reject })
     let result
     let commandId = 0
-    const deadline = Date.now() + (installedShaders ? 165_000 : 35_000)
+    const deadline = Date.now() + (installedShaders ? 165_000 : homeShader ? 80_000 : 35_000)
     while (Date.now() < deadline) {
       const id = ++commandId
       result = await new Promise((resolveResult, reject) => {
@@ -74,7 +96,7 @@ try {
       if (result?.status === 'passed' || result?.status === 'failed') break
       await wait(100)
     }
-    if (result?.status !== 'passed') throw new Error(`Browser ${installedShaders ? 'installed shaders' : shaders ? 'shader runtime' : projectArtwork ? 'project artwork' : 'image conversion'} checks failed: ${result?.text ?? 'No completed browser result'}`)
+    if (result?.status !== 'passed') throw new Error(`Browser ${homeShader ? 'homepage shader' : loader ? 'SVG loader' : installedShaders ? 'installed shaders' : shaders ? 'shader runtime' : projectArtwork ? 'project artwork' : 'image conversion'} checks failed: ${result?.text ?? 'No completed browser result'}`)
     console.log(result.text)
     if (graphics) console.log(`WebGL renderer: ${result.renderer ?? 'unavailable'}`)
     if (process.env.MEDIA_PRINT_FIXTURES === 'true') console.log(JSON.stringify(result.fixtures))

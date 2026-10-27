@@ -22,7 +22,6 @@ export function PageLoading({ message = 'Loading…', size = 'page', className =
     <div className="page-feedback-content">
       <LoadingLogo />
       <p className="page-feedback-status" data-long-message={message.length > 30 || undefined} role="status" aria-live="polite" aria-atomic="true">{message}</p>
-      <div className="page-feedback-track" aria-hidden="true"><i /></div>
     </div>
   </div>
 }

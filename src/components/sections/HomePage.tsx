@@ -5,7 +5,6 @@ import {
   useMotionValue,
   useScroll,
   useSpring,
-  useTime,
 } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { Pause, Play } from "lucide-react";
@@ -58,7 +57,7 @@ export function HomePage() {
   const smoothPointerX = useSpring(pointerX, { stiffness: 75, damping: 24 });
   const smoothPointerY = useSpring(pointerY, { stiffness: 75, damping: 24 });
   const burst = useSpring(burstTarget, { stiffness: 55, damping: 16 });
-  const time = useTime();
+  const time = useMotionValue(0);
   const { scrollYProgress } = useScroll({
     target: mainRef,
     offset: ["start start", "end end"],

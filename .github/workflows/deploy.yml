@@ -53,8 +53,17 @@ jobs:
       - name: Browser WebP conversion checks
         run: bun run test:media:browser
 
+      - name: Browser SVG loader checks
+        run: |
+          bun run test:loader:browser
+          bun run test:loader:browser --reduced-motion
+          bun run test:loader:browser --mobile
+
       - name: Browser shader lifecycle checks
         run: bun run test:shaders:browser
+
+      - name: Browser homepage shader lifecycle checks
+        run: bun run test:home:browser
 
       - name: Browser installed shader checks
         run: bun run test:shaders:installed
@@ -64,7 +73,6 @@ jobs:
           VITE_CONTACT_EMAIL: ${{ vars.VITE_CONTACT_EMAIL }}
           VITE_CONTACT_WHATSAPP: ${{ vars.VITE_CONTACT_WHATSAPP }}
         run: |
-          test -f public/loader/crimson_logo_optimized.glb
           bun run build
           test -f .output/server/index.mjs
           test -d .output/public

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { addAfterEffect, useFrame, useThree } from '@react-three/fiber'
-import { useMotionValue, useMotionValueEvent, type MotionValue } from 'framer-motion'
+import { animate, useMotionValue, useMotionValueEvent, type MotionValue } from 'framer-motion'
+import { SHADER_FADE_DURATION_MS } from '../../shaders/shader-transition'
 import { ClampToEdgeWrapping, Color, GLSL3, LinearFilter, LinearMipmapLinearFilter, LoadingManager, Mesh, MirroredRepeatWrapping, NoColorSpace, OrthographicCamera, PlaneGeometry, RawShaderMaterial, Scene, SRGBColorSpace, Texture, TextureLoader, Vector2, Vector3, WebGLRenderTarget } from 'three'
 import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js'
 import vertexShader from './fullscreen.vert.glsl?raw'
@@ -23,6 +24,7 @@ type HeroShaderProps = {
   time: MotionValue<number>
   progress: MotionValue<number>
   heroRef: RefObject<HTMLElement | null>
+  allocated?: boolean
   visible: boolean
   still: boolean
   compact: boolean
@@ -44,11 +46,15 @@ type FeedbackPipeline = {
   initialized: boolean
 }
 
+type FeedbackPasses = Pick<FeedbackPipeline, 'feedback' | 'blur' | 'feedbackScene' | 'blurScene' | 'camera'> & { geometry: PlaneGeometry }
+
 const capturedTime = [1.9955107, 3.5206001, 3.5206001] as const
 
-export function HeroShader({ time, progress, heroRef, visible, still, compact, onReady, controls }: HeroShaderProps) {
+export function HeroShader({ time, progress, heroRef, allocated = true, visible, still, compact, onReady, controls }: HeroShaderProps) {
   const { gl, size, invalidate } = useThree()
   const [textures, setTextures] = useState<Texture[] | null>(null)
+  const [readyFrame, setReadyFrame] = useState(0)
+  const opacity = useMotionValue(0)
   const material = useRef<RawShaderMaterial>(null)
   const inspect = useRef<RawShaderMaterial>(null)
   const mainMesh = useRef<Mesh>(null)
@@ -57,6 +63,7 @@ export function HeroShader({ time, progress, heroRef, visible, still, compact, o
   const pendingCapture = useRef(false)
   const pendingReady = useRef(false)
   const pipeline = useRef<FeedbackPipeline | null>(null)
+  const passes = useRef<FeedbackPasses | null>(null)
   const elapsed = useRef(0)
   const previousTime = useRef<number | null>(null)
   const frame = useRef(0)
@@ -68,7 +75,7 @@ export function HeroShader({ time, progress, heroRef, visible, still, compact, o
   const hover = useMotionValue(0)
   const velocity = useMotionValue(0)
   const uniforms = useMemo(() => ({
-    uScrollProgress: { value: 0 }, uAlpha: { value: 1 }, uExpand: { value: 0 }, uDim: { value: .25 }, vUvScale: { value: 1 },
+    uScrollProgress: { value: 0 }, uAlpha: { value: 0 }, uExpand: { value: 0 }, uDim: { value: .25 }, vUvScale: { value: 1 },
     uBoostFactor: { value: 80 }, uBoostReveal: { value: 30 }, uSaturation: { value: 3.4886 },
     uMouse: { value: new Vector2() }, uPlane: { value: new Vector2() },
     uTime: { value: new Vector3(...capturedTime) }, uResolution: { value: new Vector3() },
@@ -79,13 +86,23 @@ export function HeroShader({ time, progress, heroRef, visible, still, compact, o
     uTxtLoop: { value: null as Texture | null }, uHeroProgress: { value: 0 }, uHeroHeight: { value: 1 },
   }), [textures])
   const inspectUniforms = useMemo(() => ({
-    uInput: { value: null as Texture | null }, uChannel: { value: 4 }, uGain: { value: 1 },
+    uInput: { value: null as Texture | null }, uChannel: { value: 4 }, uGain: { value: 1 }, uAlpha: { value: 0 },
     uHeroProgress: { value: 0 }, uHeroHeight: { value: 1 },
   }), [])
+
+  useEffect(() => {
+    const fade = animate(opacity, visible && readyFrame > 0 && pipeline.current?.initialized ? 1 : 0, { duration: SHADER_FADE_DURATION_MS / 1000, ease: 'easeInOut' })
+    return () => fade.stop()
+  }, [visible, readyFrame, opacity])
+  useEffect(() => () => onReady(false), [onReady])
+  useMotionValueEvent(opacity, 'change', () => invalidate())
 
   useEffect(() => addAfterEffect(() => {
     if (pendingReady.current && material.current && visible) {
       pendingReady.current = false
+      // A rebuild can reset opacity and draw in the same React batch. A boolean
+      // false -> true can collapse to the old value and never restart the fade.
+      setReadyFrame(value => value + 1)
       onReady(true)
     }
     if (!pendingCapture.current || !material.current || !visible) return
@@ -99,6 +116,7 @@ export function HeroShader({ time, progress, heroRef, visible, still, compact, o
   useEffect(() => {
     let cancelled = false
     pendingReady.current = false
+    opacity.set(0)
     onReady(false)
     const loaded: Texture[] = []
     const manager = new LoadingManager()
@@ -145,27 +163,39 @@ export function HeroShader({ time, progress, heroRef, visible, still, compact, o
       setTextures(result)
       invalidate()
     })
-    return () => { cancelled = true; pendingReady.current = false; loaded.forEach(texture => texture.dispose()); manager.abort() }
-  }, [gl, invalidate, onReady])
+    return () => { cancelled = true; pendingReady.current = false; loaded.forEach(texture => texture.dispose()); manager.abort(); disposeDecoder() }
+  }, [gl, invalidate, onReady, opacity])
+
+  // Retain decoded pixels for this homepage visit, but release their GPU storage
+  // after fading out. Re-entry uploads them without fetching/transcoding again.
+  useEffect(() => {
+    if (!textures || !allocated) return
+    textures.forEach(texture => { texture.needsUpdate = true })
+    return () => textures.forEach(texture => texture.dispose())
+  }, [textures, allocated])
 
   useEffect(() => {
+    if (!allocated) {
+      opacity.stop()
+      opacity.set(0)
+      pendingReady.current = false
+      onReady(false)
+    }
+  }, [allocated, onReady, opacity])
+
+  // Keep the small compiled programs across scroll cycles. Recompiling a shader
+  // can consume the entire fade duration even when its image data is cached.
+  useEffect(() => {
     if (!textures) return
-    pendingReady.current = false
-    onReady(false)
-    const width = compact ? 384 : 1536
-    const height = compact ? 256 : 1024
-    const makeTarget = () => new WebGLRenderTarget(width, height, { minFilter: LinearFilter, magFilter: LinearFilter, depthBuffer: false, stencilBuffer: false, colorSpace: NoColorSpace })
-    const targets = [makeTarget(), makeTarget()]
-    const blurTargets = [makeTarget(), makeTarget()]
     const feedback = new RawShaderMaterial({ glslVersion: GLSL3, vertexShader, fragmentShader: feedbackShader, depthTest: false, depthWrite: false, toneMapped: false, uniforms: {
-      uPrev: { value: targets[0].texture }, uMarble: { value: textures[0] }, uNoise: { value: textures[5] }, uPerlin: { value: textures[6] },
+      uPrev: { value: null as Texture | null }, uMarble: { value: textures[0] }, uNoise: { value: textures[5] }, uPerlin: { value: textures[6] },
       uMouse: { value: new Vector2(.5, .5) }, uLastMouse: { value: new Vector2(.5, .5) },
       uTime: { value: capturedTime[2] }, uDelta: { value: 1 / 60 }, uHover: { value: 0 }, uVelocity: { value: 0 },
       uRadius: { value: .24 }, uStrength: { value: 2 }, uDecay: { value: .946 }, uIntensity: { value: 2 },
       uOffsetScale: { value: .25 }, uDecayRate: { value: .85 }, uMixFactor: { value: .9 }, uClampMax: { value: 1 },
     } })
     const blur = new RawShaderMaterial({ glslVersion: GLSL3, vertexShader, fragmentShader: blurShader, depthTest: false, depthWrite: false, toneMapped: false, uniforms: {
-      uInput: { value: targets[0].texture }, uAxis: { value: new Vector2() },
+      uInput: { value: null as Texture | null }, uAxis: { value: new Vector2() },
     } })
     const geometry = new PlaneGeometry(2, 2)
     const feedbackScene = new Scene()
@@ -174,6 +204,26 @@ export function HeroShader({ time, progress, heroRef, visible, still, compact, o
     blurScene.add(new Mesh(geometry, blur))
     const camera = new OrthographicCamera(-1, 1, 1, -1, 0, 2)
     camera.position.z = 1
+    passes.current = { feedback, blur, geometry, feedbackScene, blurScene, camera }
+    return () => {
+      passes.current = null
+      feedback.dispose()
+      blur.dispose()
+      geometry.dispose()
+    }
+  }, [textures, gl])
+
+  useEffect(() => {
+    if (!textures || !allocated || !passes.current) return
+    pendingReady.current = false
+    const { feedback, blur, feedbackScene, blurScene, camera } = passes.current
+    feedback.uniforms.uHover.value = 0
+    feedback.uniforms.uVelocity.value = 0
+    const width = compact ? 384 : 1536
+    const height = compact ? 256 : 1024
+    const makeTarget = () => new WebGLRenderTarget(width, height, { minFilter: LinearFilter, magFilter: LinearFilter, depthBuffer: false, stencilBuffer: false, colorSpace: NoColorSpace })
+    const targets = [makeTarget(), makeTarget()]
+    const blurTargets = [makeTarget(), makeTarget()]
     const previousTarget = gl.getRenderTarget()
     gl.getClearColor(clearColor.current)
     const alpha = gl.getClearAlpha()
@@ -188,15 +238,12 @@ export function HeroShader({ time, progress, heroRef, visible, still, compact, o
       pendingReady.current = false
       targets.forEach(target => target.dispose())
       blurTargets.forEach(target => target.dispose())
-      feedback.dispose()
-      blur.dispose()
-      geometry.dispose()
     }
-  }, [textures, compact, gl, invalidate, onReady])
+  }, [textures, compact, gl, invalidate, onReady, opacity, allocated])
 
   useEffect(() => {
     const hero = heroRef.current
-    if (!hero) return
+    if (!hero || !visible || still) return
     const move = (event: PointerEvent) => {
       if (event.pointerType !== 'mouse') return
       if (event.target instanceof Element && event.target.closest('.hero-shader-tools')) { hover.set(0); velocity.set(0); return }
@@ -217,8 +264,8 @@ export function HeroShader({ time, progress, heroRef, visible, still, compact, o
     hero.addEventListener('pointermove', move, { passive: true })
     hero.addEventListener('pointerleave', leave)
     window.addEventListener('blur', leave)
-    return () => { observer.disconnect(); hero.removeEventListener('pointerenter', move); hero.removeEventListener('pointermove', move); hero.removeEventListener('pointerleave', leave); window.removeEventListener('blur', leave) }
-  }, [heroRef, size.width, size.height, hover, velocity, invalidate])
+    return () => { observer.disconnect(); hero.removeEventListener('pointerenter', move); hero.removeEventListener('pointermove', move); hero.removeEventListener('pointerleave', leave); window.removeEventListener('blur', leave); hover.set(0); velocity.set(0) }
+  }, [heroRef, size.width, size.height, hover, velocity, invalidate, visible, still])
 
   useEffect(() => { previousTime.current = null; if (!still) captured.current = false; invalidate() }, [still, visible, invalidate])
   useMotionValueEvent(progress, 'change', () => invalidate())
@@ -230,17 +277,18 @@ export function HeroShader({ time, progress, heroRef, visible, still, compact, o
   useMotionValueEvent(controls.exportPng, 'change', () => { pendingCapture.current = true; invalidate() })
 
   useFrame(() => {
+    const resources = pipeline.current
+    if (!material.current || !resources || !resources.initialized && !visible) return
     const now = time.get()
     const delta = previousTime.current === null ? 0 : Math.max(0, Math.min(.045, (now - previousTime.current) / 1000))
     previousTime.current = now
-    const resources = pipeline.current
-    if (!material.current || !resources || !visible) return
-    const active = resources.initialized && !still && !captured.current && !document.hidden
+    const active = resources.initialized && visible && !still && !captured.current && !document.hidden
     if (active) elapsed.current += delta * controls.speed.get()
     const view = controls.view.get()
     if (mainMesh.current) mainMesh.current.visible = view === 0
     if (inspectMesh.current) inspectMesh.current.visible = view !== 0
     const values = material.current.uniforms
+    values.uAlpha.value = opacity.get()
     values.uTime.value.set(capturedTime[0] + elapsed.current * .36, capturedTime[1] + elapsed.current, capturedTime[2] + elapsed.current)
     values.uPlane.value.set(size.width, size.height)
     values.uResolution.value.set(size.width, size.height, gl.getPixelRatio())
@@ -289,6 +337,7 @@ export function HeroShader({ time, progress, heroRef, visible, still, compact, o
     if (active) frame.current++
     if (inspect.current) {
       const debug = inspect.current.uniforms
+      debug.uAlpha.value = opacity.get()
       debug.uInput.value = view === 1 ? textures?.[0] : view === 2 ? textures?.[1] : view === 3 ? textures?.[2] : view === 4 ? textures?.[3] : view === 5 ? textures?.[4] : view === 6 ? textures?.[5] : view === 7 ? resources.targets[resources.index].texture : values.uTxtLoop.value
       debug.uChannel.value = view === 2 || view === 6 || view === 7 || view === 8 ? 0 : view === 3 ? 1 : view === 4 ? 2 : 4
       debug.uHeroProgress.value = progress.get()
@@ -297,7 +346,7 @@ export function HeroShader({ time, progress, heroRef, visible, still, compact, o
   }, -1)
 
   if (!textures) return null
-  return <group visible={visible}>
+  return <group visible={allocated}>
   <mesh ref={mainMesh} frustumCulled={false} renderOrder={-5}>
     <planeGeometry args={[2, 2]} />
     <rawShaderMaterial ref={material} glslVersion={GLSL3} uniforms={uniforms} vertexShader={vertexShader} fragmentShader={fragmentShader} transparent depthTest={false} depthWrite={false} toneMapped={false} />

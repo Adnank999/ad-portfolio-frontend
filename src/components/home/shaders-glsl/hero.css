@@ -1,4 +1,4 @@
-.cinema-hero-fallback { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 60% 24%, #c21e5626, transparent 48%), radial-gradient(ellipse at 25% 35%, #6040b51c, transparent 40%), #171717; }
+.cinema-hero-fallback { position: absolute; inset: 0; pointer-events: none; background: var(--home-ink, #171717); }
 .cinema-home[data-hero-ready='true'] .cinema-hero-fallback { display: none; }
 .hero-shader-tools { position: absolute; z-index: 8; top: 180px; right: var(--home-gutter); width: min(340px, calc(100% - 48px)); display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
 .hero-shader-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; padding: 10px 16px; border: 1px solid rgb(255 255 255 / 20%); border-radius: 30px; background: rgb(12 10 17 / 85%); color: var(--home-paper); font-size: 12px !important; }
