@@ -6,6 +6,12 @@ import { ArrowRight } from 'lucide-react'
 import { dropdownLabels, industryItems, moreItems, toolItems, type DropdownName, type NavigationItem } from './navigationData'
 import { servicesOptions } from '@/queries/services/services'
 import { groupServices } from '@/lib/services/services'
+import { getServiceIcon } from './service-icons'
+
+function ServiceMenuIcon({ href }: { href?: string }) {
+  const Icon = getServiceIcon(href)
+  return <Icon size={20} strokeWidth={1.5} className="portfolio-nav-service-icon" aria-hidden="true" />
+}
 
 function useServiceGroups() {
   const services = useQuery(servicesOptions())
@@ -23,9 +29,10 @@ function CaseStudyIndustryItems({ onNavigate }: { onNavigate: () => void }) {
 }
 
 export function NavDestination({ item, className = '', onNavigate, children }: { item: NavigationItem; className?: string; onNavigate: () => void; children?: ReactNode }) {
+  const serviceIcon = item.href?.startsWith('/services/') && className.includes('simple-link') ? <ServiceMenuIcon href={item.href} /> : null
   const content = children ?? <><span><span className="accent-text">{item.label}</span>{item.ai && <span className="portfolio-nav-spark" aria-hidden="true">✦</span>}</span>{item.caseCount !== undefined && <span className="portfolio-nav-study-count">{item.caseCount} {item.caseCount === 1 ? 'study' : 'studies'}</span>}{!item.href && <span className="portfolio-nav-unavailable">Unavailable</span>}</>
   return item.href
-    ? <Link to={item.href} className={className} onClick={onNavigate}>{content}</Link>
+    ? <Link to={item.href} className={className} onClick={onNavigate}>{serviceIcon}{content}</Link>
     : <span role="link" aria-disabled="true" className={`${className} portfolio-nav-disabled`} title="No destination is available in this portfolio">{content}</span>
 }
 
@@ -65,8 +72,8 @@ function ServicesDropdown({ onNavigate }: { onNavigate: () => void }) {
     {services.isSuccess && !serviceGroups.length && <p className="portfolio-nav-panel-description">No services are currently listed.</p>}
     <div className="portfolio-nav-service-grid">{serviceGroups.map(group => <section key={group.label} className="portfolio-nav-service-column"><h3>{group.label}</h3><ul>{group.items.map(item => <li key={item.label}>
       <NavDestination item={item} onNavigate={onNavigate} className="portfolio-nav-service-card">
+        <ServiceMenuIcon href={item.href} />
         <div className="portfolio-nav-service-copy"><h4>{item.label}{item.ai && <span className="portfolio-nav-spark" aria-hidden="true">✦</span>}</h4><p>{item.description}</p>{!item.href && <span className="portfolio-nav-unavailable">Unavailable</span>}</div>
-        <div className={`portfolio-nav-service-art portfolio-nav-art-${item.visual}`} aria-hidden="true"><span /><i />{item.popular && <b>Popular</b>}</div>
       </NavDestination>
     </li>)}</ul></section>)}</div>
   </>

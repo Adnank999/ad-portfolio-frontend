@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRight, ChevronRight, Plus } from "lucide-react";
+import { ArrowUpRight, ChevronRight } from "lucide-react";
+import { EditorialAccordion } from '../editorial-accordion/EditorialAccordion';
 import { industries, getIndustry, type Answer, type CaseStudy } from "@/data/case-studies";
 import type { CaseStudySummary } from "@/data/case-studies/types";
 
@@ -48,10 +49,7 @@ export function CaseStudyFaq({ items, light = false }: { items: Answer[]; light?
   return <section id="faq" aria-labelledby="case-faq-title" className="scroll-mt-28 py-14 md:py-20">
     <p className={`mb-4 text-[10px] uppercase tracking-[.18em] ${light ? "text-[#96355f]" : "text-accent"}`}><span className="accent-text">Questions & answers</span></p>
     <h2 id="case-faq-title" className="mb-8 text-4xl leading-none md:text-5xl">Frequently asked questions</h2>
-    <div className={`divide-y overflow-hidden rounded-xl border ${light ? "divide-[#20172a]/10 border-[#20172a]/10 bg-white/40" : "divide-white/10 border-white/10 bg-[#1b1b1b]"}`}>{items.map((faq) => <details key={faq.question} className="group px-5 py-4 md:px-7">
-      <summary className={`flex min-h-11 cursor-pointer list-none items-center gap-4 text-xs leading-relaxed focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b5006c] [&::-webkit-details-marker]:hidden ${light ? "text-[#382b40]" : "text-[#e1d9e5]"}`}><span className="flex-1">{faq.question}</span><Plus size={15} className="shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" aria-hidden="true" /></summary>
-      <p className={`max-w-3xl pt-4 pb-2 text-xs leading-[1.95] ${light ? "text-[#5e5268]" : "text-[#b1a7b6]"}`}>{faq.answer}</p>
-    </details>)}</div>
+    <EditorialAccordion light={light} items={items.map(faq => ({ title: faq.question, content: <p>{faq.answer}</p> }))} />
   </section>;
 }
 

@@ -6,6 +6,7 @@ import { ArticleShare } from '@/components/global/article-share/ArticleShare'
 import { blogCategories, formatBlogDate } from '@/data/blog'
 import type { PublishedBlogPost } from '@/data/blog'
 import './blog-detail.css'
+import { EditorialAccordion } from '@/components/global/editorial-accordion/EditorialAccordion'
 
 export function BlogDetailPage({ post }: { post: PublishedBlogPost }) {
   const category = blogCategories.find((entry) => entry.id === post.category)?.label ?? 'Insights'
@@ -30,6 +31,7 @@ export function BlogDetailPage({ post }: { post: PublishedBlogPost }) {
         <ArticleToc items={post.contents} articleId="blog-article-body" />
         <div id="blog-article-body" className="min-w-0 text-[13px] leading-[1.95] text-[#bcb4bf] md:text-sm">
           <div className="blog-article-body" dangerouslySetInnerHTML={{ __html: post.renderedHtml }} />
+          {!!post.faqs.length && <section id="article-faq" className="scroll-mt-28 mt-14" aria-labelledby="article-faq-title"><h2 id="article-faq-title" className="mb-8 text-4xl leading-tight">Frequently asked questions</h2><EditorialAccordion items={post.faqs.map(faq => ({ title: faq.question, content: <p>{faq.answer}</p> }))} /></section>}
           <footer className="mt-14 border-t border-white/10 pt-8">
             <ul aria-label="Article topics" className="flex flex-wrap gap-2">{post.tags.map((tag) => <li key={tag} className="rounded-full border border-white/10 px-3 py-1.5 text-[10px] text-[#bcb4bf]">{tag}</li>)}</ul>
             <div className="my-8 flex items-center gap-4"><span aria-hidden="true" className="grid size-12 shrink-0 place-items-center rounded-full border border-accent/30 bg-accent/10 text-xs text-accent"><span className="accent-text">{post.author.initials}</span></span><div><Link to="/about" className="inline-flex min-h-7 items-center text-sm text-[#eee5ed] hover:text-accent"><span className="accent-text">{post.author.name}</span></Link><p className="text-[11px] text-[#aaa2ac]">{post.author.role}</p></div></div>

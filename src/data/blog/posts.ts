@@ -8,7 +8,7 @@ export const blogPosts: BlogPost[] = [
     category: "insights",
     publishedAt: "2026-10-14",
     updatedAt: "2026-10-14",
-    author: { name: "Adnan Hossain Khan", role: "Full Stack Developer", initials: "AH" },
+    author: { name: "Adnan Hossain Khan", role: "Design & engineering", initials: "AH" },
     cover: "/images/blog/from-idea-to-first-release.svg",
     coverAlt: "Three connected panels representing a project brief, a working build, and a release handover.",
     socialImage: "/images/blog/from-idea-to-first-release.png",

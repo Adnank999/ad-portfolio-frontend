@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { Plus, ArrowUpRight, Check, Minus } from "lucide-react";
+import { ArrowUpRight, Check, Minus } from "lucide-react";
+import { EditorialAccordion } from '../editorial-accordion/EditorialAccordion';
 import { Link } from "@tanstack/react-router";
 import { ServiceMedia } from '../service-media/ServiceMedia';
 import type { ServiceMedia as Media } from '@/lib/services/services';
@@ -43,15 +44,7 @@ export function ServiceSpotlight({ kind, title, text, points, media, visual }: {
 }
 
 export function ServiceAccordion({ items, numbered = false }: { items: ServiceItem[]; numbered?: boolean }) {
-  return <div className="divide-y divide-white/10 overflow-hidden rounded-xl border border-white/10 bg-[#191919]">{items.map((item, index) => (
-    <details key={item.title} className="group p-5 md:px-7" open={numbered && index === 0 ? true : undefined}>
-      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-4 text-sm text-[#e0dce1] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
-        {numbered && <span className={`text-[11px] ${index === items.length - 1 ? "text-accent" : "text-[#858087]"}`}><span className="accent-text">{String(index + 1).padStart(2, "0")}</span></span>}
-        <span className="flex-1">{item.title}</span><Plus size={15} className="shrink-0 text-[#aaa6ac] transition-transform group-open:rotate-45 motion-reduce:transition-none" aria-hidden="true" />
-      </summary>
-      <p className={`max-w-3xl pt-4 text-xs leading-[1.95] text-[#aaa6ac] ${numbered ? "pl-8" : ""}`}>{item.text}</p>
-    </details>
-  ))}</div>;
+  return <EditorialAccordion items={items.map(item => ({ title: item.title, content: <p>{item.text}</p> }))} initialOpen={numbered ? 0 : null} />;
 }
 
 export function ServiceContactLink({ children = "Discuss your project" }: { children?: ReactNode }) {

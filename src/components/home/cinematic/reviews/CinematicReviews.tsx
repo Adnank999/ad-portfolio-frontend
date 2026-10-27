@@ -3,6 +3,7 @@ import { motion, useAnimationFrame, useInView, useMotionValue, useTransform } fr
 import { ArrowLeft, ArrowRight, Pause, Play } from "lucide-react";
 import { projects } from "@/data/projects";
 import { ReviewCard } from "./ReviewCard";
+import './review-proof.css';
 import { sampleReviews, toolkit, type Review } from "./reviews";
 
 export function CinematicReviews({ still, reviews = sampleReviews }: { still: boolean; reviews?: Review[] }) {
@@ -59,10 +60,10 @@ export function CinematicReviews({ still, reviews = sampleReviews }: { still: bo
         </motion.div>
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-linear-to-r from-[#111111] via-transparent to-[#111111]" />
         <div className="absolute inset-x-0 flex justify-center px-6">
-          <div className="flex max-w-full flex-wrap items-center justify-center gap-x-5 gap-y-2 rounded-xl border border-white/15 bg-[#141414]/95 px-5 py-4 text-center text-[9px] uppercase tracking-[0.12em] shadow-xl backdrop-blur-md sm:text-[10px]">
-            <span>5+ years</span>
-            <span className="text-white/60">50+ projects</span>
-            <span className="text-accent"><span className="accent-text">Built with care</span></span>
+          <div className="review-proof" aria-label="Experience and approach">
+            <p><strong>5+</strong> years</p>
+            <p><strong>50+</strong> projects</p>
+            <p>Built with care</p>
           </div>
         </div>
       </div>

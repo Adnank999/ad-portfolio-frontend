@@ -1,0 +1,5 @@
+.review-proof { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 24px; max-width: 100%; padding: 15px 22px; border: 1px solid rgb(255 255 255 / 16%); border-radius: 14px; background: rgb(20 20 20 / 97%); box-shadow: 0 12px 35px #0005; backdrop-filter: blur(16px); }
+.review-proof p { display: flex; align-items: baseline; gap: 6px; margin: 0; color: #e4dfe3; font: 500 13px/1.5 var(--font-body); letter-spacing: .015em; white-space: nowrap; }
+.review-proof strong { font: 400 20px/1 var(--font-editorial); color: #fff; }
+.review-proof p:last-child { color: #ec9bb7; }
+@media (max-width: 480px) { .review-proof { gap: 8px 15px; padding: 12px 15px; } .review-proof p { font-size: 12px; } .review-proof strong { font-size: 18px; } }

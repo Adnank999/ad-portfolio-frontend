@@ -8,7 +8,7 @@ export const nearshoreSoftwareDevelopmentContent: ServiceContent = {
   artwork: "software",
   overview: {
     title: "Extra engineering capacity with a clear place in your team.",
-    text: "You may have a feature waiting for development, an integration nobody has time to own, or a product backlog moving too slowly. I contribute directly to an existing team as an independent full-stack developer based in Bangladesh. If you are comparing nearshore partners, we first establish whether my location, availability, and working-hour overlap fit your needs.",
+    text: "You may have a feature waiting for development, an integration nobody has time to own, or a product backlog moving too slowly. I contribute directly to an existing team as an independent developer. We first establish whether my availability, working style, and working-hour overlap fit your team.",
     definitions: [
       {
         title: "An individual contributor",
@@ -159,7 +159,7 @@ export const nearshoreSoftwareDevelopmentContent: ServiceContent = {
   faqs: [
     {
       title: "Are you a nearshore agency or an individual developer?",
-      text: "I am an independent developer based in Bangladesh. Whether that location is nearshore to you depends on where your team works. This service is a direct collaboration with me; staffing a larger team is outside the standard scope."
+      text: "I am an independent developer, not an agency. This service is a direct collaboration with me, with scope and working-hour overlap agreed around your team; staffing a larger team is outside the standard scope."
     },
     {
       title: "Can you work in our time zone?",

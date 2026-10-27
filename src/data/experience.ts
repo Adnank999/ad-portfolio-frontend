@@ -1,5 +1,5 @@
 export const professionalProfile = {
-  summary: 'Full-stack developer with 4+ years of experience connecting customer-facing interfaces with the backend systems that make them work. My focus is maintainable code, reliable integrations, application performance, and software people can depend on.',
+  summary: 'Software engineer with 4+ years of experience connecting customer-facing interfaces with the backend systems that make them work. My focus is maintainable code, reliable integrations, application performance, and software people can depend on.',
   focus: 'React, TypeScript, Laravel, and PHP form the core of my work, alongside relational databases, REST APIs, background processing, cloud services, and applied AI.',
 }
 
@@ -25,7 +25,7 @@ export const experience = [
     company: 'BZM Graphics',
     role: 'Full-Stack Developer',
     period: 'October 2024 — October 2025',
-    location: 'Dhaka, Bangladesh',
+    location: '',
     summary: 'Built media-heavy applications and internal business tools, combining cloud storage, real-time updates, automated delivery, and AI-powered visual experiences.',
     highlights: [
       'Developed a scalable image-upload platform backed by Amazon S3.',
@@ -57,5 +57,5 @@ export const education = {
   institution: 'Daffodil International University',
   qualification: 'B.Sc. in Electronics and Telecommunication Engineering',
   period: '2015 — 2019',
-  location: 'Dhaka, Bangladesh',
+  location: '',
 }

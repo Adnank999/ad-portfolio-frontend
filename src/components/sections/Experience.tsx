@@ -27,7 +27,7 @@ export function Experience() {
                     <h3 className="mt-3 text-2xl sm:text-3xl">{position.company}</h3>
                     <p className="mt-2 text-sm text-slate-300">{position.role}</p>
                   </div>
-                  <p className="text-xs leading-6 text-slate-400">Company location<br />{position.location}</p>
+                  {position.location && <p className="text-xs leading-6 text-slate-400">Company location<br />{position.location}</p>}
                 </div>
                 <p className="mt-6 max-w-3xl text-base leading-8 text-slate-300">{position.summary}</p>
                 <ul className="mt-6 list-disc space-y-3 pl-5 text-sm leading-7 text-slate-400 marker:text-accent-400">
@@ -45,7 +45,7 @@ export function Experience() {
           <p className="text-xs uppercase tracking-[.2em] text-accent-300">Education / The foundation</p>
           <h2 id="experience-education-title" className="mt-4 text-2xl sm:text-3xl">{education.institution}</h2>
           <p className="mt-4 text-base leading-7 text-slate-300">{education.qualification}</p>
-          <p className="mt-3 text-sm leading-7 text-slate-400">{education.period} · {education.location}</p>
+          <p className="mt-3 text-sm leading-7 text-slate-400">{education.period}{education.location && ` · ${education.location}`}</p>
         </section>
       </div>
     </main>

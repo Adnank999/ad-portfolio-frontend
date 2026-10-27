@@ -15,8 +15,8 @@
 .site-account-pending { width: 90px; min-height: 44px; }
 .site-account .site-sign-in:disabled { opacity: .6; cursor: wait; }
 .site-account-error { position: absolute; top: calc(100% + 12px); right: 0; width: 220px; padding: 12px; background: #171717; color: #f7c4d4; border: 1px solid var(--accent); font: 12px/1.6 var(--font-sans); }
-@media (min-width: 1100px) { .portfolio-nav { right: 186px; } }
-@media (min-width: 1100px) { body:has(.portfolio-nav-desktop-account .site-account-name) .portfolio-nav { right: 290px; } }
+@media (min-width: 1100px) { .portfolio-nav-desktop-account .site-account-name { max-width: 60px; } }
+@media (min-width: 1100px) and (max-width: 1350px) { .portfolio-nav-desktop-account .site-account-name { display: none; } }
 @media (max-width: 1099px) {
   .portfolio-nav .site-account { position: relative; inset: auto; gap: 6px; max-width: 200px; }
   .portfolio-nav .site-account .site-sign-in { inset: auto; padding-inline: 10px; }

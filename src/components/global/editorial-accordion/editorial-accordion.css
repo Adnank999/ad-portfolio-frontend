@@ -1,0 +1,21 @@
+.editorial-accordion { --faq-ink: #f3eff4; --faq-muted: #b3abb6; --faq-line: rgb(255 255 255 / 15%); }
+.editorial-accordion[data-theme='light'] { --faq-ink: #281c2d; --faq-muted: #5e5268; --faq-line: rgb(32 23 42 / 18%); }
+.editorial-accordion-item { border-top: 1px solid var(--faq-line); }
+.editorial-accordion-item:last-child { border-bottom: 1px solid var(--faq-line); }
+.editorial-accordion-item h3 { margin: 0; }
+.editorial-accordion-item h3 button { display: grid; grid-template-columns: 42px minmax(0, 1fr) 24px; align-items: center; gap: 18px; width: 100%; min-height: 104px; padding: 28px 0; border: 0; background: none; color: var(--faq-ink); text-align: left; cursor: pointer; font-family: var(--font-editorial); font-size: clamp(24px, 2.7vw, 36px); font-weight: 400; line-height: 1.25; letter-spacing: -.015em; }
+.editorial-accordion-item small { color: var(--faq-muted); font-size: 14px; letter-spacing: .04em; }
+.editorial-accordion-item button span { min-width: 0; overflow-wrap: anywhere; }
+.editorial-accordion-item button svg { color: var(--faq-muted); transition: transform .2s ease, color .2s ease; }
+.editorial-accordion-item[data-expanded='true'] button svg { color: var(--accent); }
+.editorial-accordion-item button:hover svg { color: var(--faq-ink); }
+.editorial-accordion-item button:focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; }
+.editorial-accordion-answer { padding: 0 48px 32px 60px; max-width: 900px; color: var(--faq-muted); font-family: var(--font-body); font-size: 14px; line-height: 1.9; }
+.editorial-accordion-answer[hidden] { display: none; }
+.editorial-accordion-answer p { margin: 0; }
+@media (max-width: 640px) {
+  .editorial-accordion-item h3 button { grid-template-columns: 26px minmax(0, 1fr) 22px; gap: 10px; min-height: 92px; padding-block: 23px; font-size: clamp(22px, 5.6vw, 28px); }
+  .editorial-accordion-item small { font-size: 12px; }
+  .editorial-accordion-answer { padding: 0 32px 26px 36px; }
+}
+@media (prefers-reduced-motion: reduce) { .editorial-accordion-item button svg { transition: none; } }

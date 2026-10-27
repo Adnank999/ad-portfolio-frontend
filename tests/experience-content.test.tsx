@@ -12,7 +12,7 @@ describe('CV-based career content', () => {
   test('keeps all three employers and exact CV periods in reverse chronological order', () => {
     expect(experience.map(position => [position.company, position.role, position.period, position.location])).toEqual([
       ['VervTrip', 'Full-Stack Developer', 'October 2025 — Present', 'London, United Kingdom'],
-      ['BZM Graphics', 'Full-Stack Developer', 'October 2024 — October 2025', 'Dhaka, Bangladesh'],
+      ['BZM Graphics', 'Full-Stack Developer', 'October 2024 — October 2025', ''],
       ['ChatChef', 'Frontend Developer', 'December 2022 — September 2024', 'Canada'],
     ])
     const source = readFileSync(new URL('../src/components/sections/About.tsx', import.meta.url), 'utf8')

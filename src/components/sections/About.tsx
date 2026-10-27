@@ -33,7 +33,7 @@ export function About() {
           </span>
         </div>
         <div className="about-hero-copy">
-          <p className="about-label">Full-stack developer · Dhaka, Bangladesh</p>
+          <p className="about-label">The person behind the work</p>
           <h1 id="about-name" aria-label="Adnan Hossain Khan">
             <span className="about-name-outline">ADNAN HOSSAIN</span>
             <span className="about-name-solid">KHAN.</span>

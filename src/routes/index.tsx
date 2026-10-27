@@ -3,8 +3,8 @@ import { HomePage } from '@/components/sections/HomePage'
 
 export const Route = createFileRoute('/')({
   head: () => ({ meta: [
-    { title: 'Adnan Hossain Khan — Full Stack Developer' },
-    { name: 'description', content: 'Full stack developer portfolio focused on Laravel, React, TypeScript, APIs, performance and product engineering.' },
+    { title: 'Adnan Hossain Khan — Ideas into reality' },
+    { name: 'description', content: 'Thoughtful systems. Remarkable experiences. Explore the products, projects and engineering work of Adnan Hossain Khan.' },
   ] }),
   component: HomePage,
 })

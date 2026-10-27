@@ -7,6 +7,7 @@ import { ServiceArtwork } from "./ServiceArtwork";
 import { ServiceAccordion, ServiceComparison, ServiceContactLink, ServiceGrid, ServiceSection, ServiceSpotlight } from "./ServiceSections";
 import type { ServiceContent } from "./servicePage.types";
 import { ActiveShaderProvider } from '@/components/shaders/ActiveShaderProvider';
+import './service-page.css';
 
 const phases = ["Discover", "Diagnose", "Design", "Deliver", "Evolve"];
 
@@ -27,11 +28,11 @@ export function ServicePage({ content, services = [] }: { content: ServiceConten
         </div>
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-t from-[#151515] via-[#151515]/40 to-[#151515]/25" />
         <Link to="/services" className="mb-7 inline-flex min-h-11 items-center gap-2 text-[10px] uppercase tracking-[.18em] text-[#d2b8c8] hover:text-white">Services <span aria-hidden="true">/</span> {content.category}</Link>
-        <h1 className="max-w-4xl text-[clamp(3.75rem,8.5vw,8rem)] leading-[.95] [text-wrap:balance]">{content.title}</h1>
+        <h1 className="service-hero-title">{content.title}</h1>
         <p className="mt-7 max-w-xl text-xs leading-[1.9] text-[#d1c6cf] md:text-sm">{content.summary}</p>
         {!heroShader && (media('hero') || heroVisual) && <div data-service-hero-media className="mt-10 w-full max-w-4xl"><ServiceMedia media={media('hero')} visual={heroVisual} artwork={content.artwork} eager /></div>}
         <div className="mt-8"><ServiceContactLink /></div>
-        <div className="mt-9 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[9px] uppercase tracking-wider text-[#b7a9b2]"><span>Adnan Hossain Khan</span><span>Based in Bangladesh</span><span>Working remotely</span></div>
+        <div className="mt-9 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[11px] uppercase tracking-wider text-[#b7a9b2]"><span>Adnan Hossain Khan</span><span>Working together, wherever you are</span></div>
       </section>
 
       <nav aria-label="On this service page" className="border-y border-white/10 px-6">
@@ -69,7 +70,7 @@ export function ServicePage({ content, services = [] }: { content: ServiceConten
         <ServiceSection eyebrow="In practice" title={content.approach.title}><ServiceGrid items={content.approach.items} /></ServiceSection>
         <ServiceSection id="service-method" eyebrow="05 / How the work moves forward" title="A clear path from discovery to handover."><ServiceAccordion numbered items={phases.map((title, index) => ({ title, text: content.process[index] }))} /></ServiceSection>
 
-        <ServiceSection eyebrow="06 / Ways to work together" title={content.engagement.title}><ServiceGrid items={content.engagement.items} /><p className="mt-5 max-w-3xl text-[11px] leading-[1.9] text-[#aaa6ac]">You work directly with me, Adnan, from Bangladesh. Before work begins, we agree on deliverables, fees, review dates, time-zone overlap, and support responsibilities. Progress is shared through written updates and milestone reviews.</p><div className="mt-6"><ServiceContactLink>Discuss your scope</ServiceContactLink></div></ServiceSection>
+        <ServiceSection eyebrow="06 / Ways to work together" title={content.engagement.title}><ServiceGrid items={content.engagement.items} /><p className="mt-5 max-w-3xl text-[11px] leading-[1.9] text-[#aaa6ac]">You work directly with me, Adnan. Before work begins, we agree on deliverables, fees, review dates, time-zone overlap, and support responsibilities. Progress is shared through written updates and milestone reviews.</p><div className="mt-6"><ServiceContactLink>Discuss your scope</ServiceContactLink></div></ServiceSection>
 
         <ServiceSection id="service-preparation" eyebrow="Before our first conversation" title={content.preparation.title}>
           <div className="grid gap-7 md:grid-cols-2 md:gap-12">

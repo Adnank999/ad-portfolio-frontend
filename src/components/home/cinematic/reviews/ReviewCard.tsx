@@ -21,7 +21,7 @@ export function ReviewCard({ review, still }: { review: Review; still: boolean }
         <span aria-hidden="true" className="text-xs tracking-[0.15em] text-amber-400">★★★★★</span>
         <blockquote
           id={quoteId}
-          className={`text-[12px] italic leading-[1.65] text-white/80 ${expanded ? "" : "line-clamp-3"}`}
+          className={`text-[14px] leading-[1.8] text-white/85 ${expanded ? "" : "line-clamp-3"}`}
         >
           “{review.quote}”
         </blockquote>

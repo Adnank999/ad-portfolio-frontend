@@ -23,20 +23,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { charSet: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
         { name: "theme-color", content: "#05070d" },
-        { title: "Adnan Hossain Khan — Full Stack Developer" },
+        { title: "Adnan Hossain Khan — Ideas into reality" },
         {
           name: "description",
           content:
-            "Portfolio of Adnan Hossain Khan, a full stack developer building modern Laravel, React, TypeScript and API-driven web products.",
+            "Thoughtful interfaces and dependable systems. Explore web products, software and digital experiences by Adnan Hossain Khan.",
         },
         {
           property: "og:title",
-          content: "Adnan Hossain Khan — Full Stack Developer",
+          content: "Adnan Hossain Khan — Ideas into reality",
         },
         {
           property: "og:description",
           content:
-            "Modern full-stack web engineering across Laravel, React, TypeScript, APIs and product experiences.",
+            "Thoughtful interfaces, dependable systems, and modern digital products.",
         },
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary_large_image" },

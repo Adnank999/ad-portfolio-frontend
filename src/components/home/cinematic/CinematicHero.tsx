@@ -26,7 +26,7 @@ export function CinematicHero({
     >
       {/*<div className="cinema-wrap cinema-hero-top">
         <span className="cinema-micro">
-          Adnan Hossain Khan / Full stack developer
+          Adnan Hossain Khan / Ideas into reality
         </span>
         <span className="cinema-status">
           <i /> Open to collaboration
@@ -76,7 +76,7 @@ export function CinematicHero({
           <ArrowDown size={17} aria-hidden="true" /> Scroll to discover
         </a>
         {/*<span className="cinema-micro">
-          Based in Bangladesh · Working everywhere
+          Working together, wherever you are
         </span>*/}
       </div>
       <CinematicReviews still={still} />

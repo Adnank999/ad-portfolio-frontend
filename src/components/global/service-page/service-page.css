@@ -1,0 +1,2 @@
+.service-hero-title { width: 100%; max-width: 896px; margin: 0; font-size: clamp(2.25rem, 8.5vw, 8rem); line-height: 1.04; letter-spacing: -.035em; text-wrap: balance; overflow-wrap: anywhere; }
+@media (min-width: 768px) { .service-hero-title { line-height: .98; } }

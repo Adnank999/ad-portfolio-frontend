@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { blogCategories } from '@/data/blog'
 import type { BlogArchive, BlogCounts, BlogSearch, PublishedBlogPost } from '@/data/blog'
 import { portfolioApi, PortfolioApiError } from './portfolio-api'
+import { withoutAppendedFaq } from '@/lib/articleFaq'
 
 function archiveInput(input: Pick<BlogSearch, 'category' | 'page' | 'sort'>) {
   if (input.category && !blogCategories.some((category) => category.id === input.category)) throw new Error('Invalid blog category')
@@ -40,11 +41,13 @@ function headingText(html: string) {
 
 function withContents(post: PublishedBlogPost): PublishedBlogPost {
   const contents: PublishedBlogPost['contents'] = []
-  const renderedHtml = post.renderedHtml.replace(/<h([23])\b[^>]*>([\s\S]*?)<\/h\1>/gi, (_heading: string, level: string, text: string) => {
+  const article = post.faqs.length ? withoutAppendedFaq(post.renderedHtml) : post.renderedHtml
+  const renderedHtml = article.replace(/<h([23])\b[^>]*>([\s\S]*?)<\/h\1>/gi, (_heading: string, level: string, text: string) => {
     const id = `article-section-${contents.length + 1}`
     contents.push({ id, title: headingText(text) })
     return `<h${level} id="${id}">${text}</h${level}>`
   })
+  if (post.faqs.length) contents.push({ id: 'article-faq', title: 'Frequently asked questions' })
   return {
     slug: post.slug, title: post.title, description: post.description, category: post.category,
     publishedAt: post.publishedAt, updatedAt: post.updatedAt, author: post.author,

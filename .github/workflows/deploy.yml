@@ -60,6 +60,9 @@ jobs:
         run: bun run test:shaders:installed
 
       - name: Build production SSR output
+        env:
+          VITE_CONTACT_EMAIL: ${{ vars.VITE_CONTACT_EMAIL }}
+          VITE_CONTACT_WHATSAPP: ${{ vars.VITE_CONTACT_WHATSAPP }}
         run: |
           test -f public/loader/crimson_logo_optimized.glb
           bun run build
