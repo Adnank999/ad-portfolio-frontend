@@ -100,7 +100,7 @@ export function BrandLogo() {
       <svg
         className="brand-logo-still"
         viewBox="0 0 512 512"
-        fill="#2B1B17"
+        fill="currentColor"
         focusable="false"
       >
         <path d={brandMarkPath} />
