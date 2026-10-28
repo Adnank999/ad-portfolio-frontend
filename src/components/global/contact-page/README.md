@@ -1,5 +1,9 @@
 # Contact page
 
-Editorial enquiry page with project-type choices, name/email, a short brief and timing. Input is validated before creating a draft. Visitors review it and open their email app or copy the brief; the page never claims a message was submitted or delivered. Nothing is persisted by the application.
+Simple enquiry page with name, email, subject and message. Submit calls `src/server/contact.ts`, which validates the same schema, enforces the existing same-origin policy, and forwards JSON to the private Rust API at `POST /api/v1/contact`. Rust sends the email via Resend. There is no draft/copy step or mail-app requirement.
 
-Configure public build-time VITE_CONTACT_EMAIL with the receiving address. Optionally set VITE_CONTACT_WHATSAPP to an international number containing digits only (no +). Both are public contact information, not secrets. Rebuild the frontend after setting them. Until a real recipient is configured, the page offers a copyable brief and explicitly says email delivery is unavailable. The footer reuses the same configuration.
+The shared two-red accent is retained in the heading, submit button and decorative glow. Labels, keyboard focus, sending feedback and forced-color states remain accessible. Mobile fields use 16px text. The contact page uses the compact global footer.
+
+Configure `RESEND_API_KEY`, `RESEND_FROM_EMAIL` and `CONTACT_TO_EMAIL` in the **backend** `.env.portfolio`; see [Resend deployment setup](../../../../../Backend/deploy/contact-email.md). No Resend key belongs in the frontend or any `VITE_*` setting. The frontend uses its existing runtime `PORTFOLIO_API_URL` and `APP_ORIGIN`. Optional public build-time `VITE_CONTACT_EMAIL` and `VITE_CONTACT_WHATSAPP` only show alternative email/WhatsApp links; they do not control the form's recipient.
+
+The button locks during sending and duplicate submissions are ignored. Errors retain the form values. Retries of unchanged content reuse a UUID sent to Resend as an idempotency key; editing the enquiry changes that key. Success is displayed only after the backend receives a successful Resend response with an email ID. Provider acceptance is not a guarantee of inbox delivery. No contact content is stored in PostgreSQL, and no automatic client acknowledgement email is sent.

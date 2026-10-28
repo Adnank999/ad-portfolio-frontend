@@ -1,5 +1,8 @@
-.site-footer { background: #151515; color: #f2edf1; border-top: 1px solid #ffffff1f; padding: 64px 24px 28px; }
+/* Keep the entire footer above the homepage's fixed canvas, including plain text. */
+.site-footer { position: relative; z-index: 1; background: #151515; color: #f2edf1; border-top: 1px solid #ffffff1f; padding: 64px 24px 28px; }
 .site-footer-wrap { max-width: 1200px; margin-inline: auto; }
+.site-footer[data-contact-prompt='false'] { padding-top: 0; }
+.site-footer[data-contact-prompt='false'] .site-footer-middle { border-top: 0; }
 .site-footer-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; padding-bottom: 44px; }
 .site-footer-eyebrow { margin: 0 0 20px; color: #b7aab4; font-size: 10px; letter-spacing: .17em; text-transform: uppercase; }
 .site-footer h2 { margin: 0; font-size: clamp(44px, 6vw, 76px); line-height: 1.04; letter-spacing: -.025em; }
@@ -9,8 +12,9 @@
 .site-footer-brand img { filter: invert(1); opacity: .85; }
 .site-footer-brand small { display: block; margin-top: 8px; color: #b7aab4; font: 11px/1.8 var(--font-body); }
 .site-footer nav { display: flex; flex-wrap: wrap; gap: 4px 22px; }
-.site-footer nav a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; font-size: 12px; color: #c3b9c0; }
+.site-footer nav a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; font-size: 12px; color: #a4a3aa; transition: color .2s; }
 .site-footer a:hover { color: #f9d7e5; }
+.site-footer nav a:is(:hover, :focus-visible) { color: #e8e7ec; }
 .site-footer-bottom { display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap; padding-top: 24px; }
 .site-footer-bottom p { margin: 0; font-size: 11px; line-height: 1.8; color: #aaa0a8; }
 .site-footer-bottom > div { display: flex; gap: 8px; }

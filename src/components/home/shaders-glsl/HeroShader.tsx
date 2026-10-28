@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { addAfterEffect, useFrame, useThree } from '@react-three/fiber'
 import { animate, useMotionValue, useMotionValueEvent, type MotionValue } from 'framer-motion'
 import { SHADER_FADE_DURATION_MS } from '../../shaders/shader-transition'
-import { ClampToEdgeWrapping, Color, GLSL3, LinearFilter, LinearMipmapLinearFilter, LoadingManager, Mesh, MirroredRepeatWrapping, NoColorSpace, OrthographicCamera, PlaneGeometry, RawShaderMaterial, Scene, SRGBColorSpace, Texture, TextureLoader, Vector2, Vector3, WebGLRenderTarget } from 'three'
+import { ClampToEdgeWrapping, Color, GLSL3, Group, LinearFilter, LinearMipmapLinearFilter, LoadingManager, Mesh, MirroredRepeatWrapping, NoColorSpace, OrthographicCamera, PlaneGeometry, RawShaderMaterial, Scene, SRGBColorSpace, Texture, TextureLoader, Vector2, Vector3, WebGLRenderTarget } from 'three'
 import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js'
 import vertexShader from './fullscreen.vert.glsl?raw'
 import fragmentShader from './marble.frag.glsl?raw'
@@ -10,6 +10,7 @@ import feedbackShader from './feedback.frag.glsl?raw'
 import blurShader from './blur.frag.glsl?raw'
 import inspectShader from './inspect.frag.glsl?raw'
 import type { HeroShaderControls } from './ShaderControls'
+import { prepareHeroPrograms } from './prepare-hero-programs'
 import marbleUrl from './assets/marble-desktop.ktx2?url'
 import revealUrl from './assets/marble-01-desktop.ktx2?url'
 import selectionUrl from './assets/marble-02-desktop.ktx2?url'
@@ -51,8 +52,11 @@ type FeedbackPasses = Pick<FeedbackPipeline, 'feedback' | 'blur' | 'feedbackScen
 const capturedTime = [1.9955107, 3.5206001, 3.5206001] as const
 
 export function HeroShader({ time, progress, heroRef, allocated = true, visible, still, compact, onReady, controls }: HeroShaderProps) {
-  const { gl, size, invalidate } = useThree()
+  const { gl, size, invalidate, camera: renderCamera } = useThree()
   const [textures, setTextures] = useState<Texture[] | null>(null)
+  const [programsReady, setProgramsReady] = useState(false)
+  const [preparationError, setPreparationError] = useState<unknown>(null)
+  const group = useRef<Group>(null)
   const [readyFrame, setReadyFrame] = useState(0)
   const opacity = useMotionValue(0)
   const material = useRef<RawShaderMaterial>(null)
@@ -186,7 +190,8 @@ export function HeroShader({ time, progress, heroRef, allocated = true, visible,
   // Keep the small compiled programs across scroll cycles. Recompiling a shader
   // can consume the entire fade duration even when its image data is cached.
   useEffect(() => {
-    if (!textures) return
+    if (!textures || !group.current) return
+    setProgramsReady(false)
     const feedback = new RawShaderMaterial({ glslVersion: GLSL3, vertexShader, fragmentShader: feedbackShader, depthTest: false, depthWrite: false, toneMapped: false, uniforms: {
       uPrev: { value: null as Texture | null }, uMarble: { value: textures[0] }, uNoise: { value: textures[5] }, uPerlin: { value: textures[6] },
       uMouse: { value: new Vector2(.5, .5) }, uLastMouse: { value: new Vector2(.5, .5) },
@@ -212,6 +217,16 @@ export function HeroShader({ time, progress, heroRef, allocated = true, visible,
       geometry.dispose()
     }
   }, [textures, gl])
+
+  useEffect(() => {
+    if (!textures || !allocated || programsReady || !passes.current || !group.current) return
+    const { feedbackScene, blurScene, camera } = passes.current
+    return prepareHeroPrograms(gl, [
+      { scene: feedbackScene, camera },
+      { scene: blurScene, camera },
+      { scene: group.current, camera: renderCamera },
+    ], textures, () => { setProgramsReady(true); invalidate() }, error => setPreparationError(() => error))
+  }, [textures, allocated, programsReady, gl, renderCamera, invalidate])
 
   useEffect(() => {
     if (!textures || !allocated || !passes.current) return
@@ -278,7 +293,7 @@ export function HeroShader({ time, progress, heroRef, allocated = true, visible,
 
   useFrame(() => {
     const resources = pipeline.current
-    if (!material.current || !resources || !resources.initialized && !visible) return
+    if (!programsReady || !material.current || !resources || !resources.initialized && !visible) return
     const now = time.get()
     const delta = previousTime.current === null ? 0 : Math.max(0, Math.min(.045, (now - previousTime.current) / 1000))
     previousTime.current = now
@@ -345,8 +360,9 @@ export function HeroShader({ time, progress, heroRef, allocated = true, visible,
     }
   }, -1)
 
+  if (preparationError !== null) throw preparationError
   if (!textures) return null
-  return <group visible={allocated}>
+  return <group ref={group} visible={allocated && programsReady}>
   <mesh ref={mainMesh} frustumCulled={false} renderOrder={-5}>
     <planeGeometry args={[2, 2]} />
     <rawShaderMaterial ref={material} glslVersion={GLSL3} uniforms={uniforms} vertexShader={vertexShader} fragmentShader={fragmentShader} transparent depthTest={false} depthWrite={false} toneMapped={false} />

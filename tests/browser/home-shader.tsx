@@ -5,6 +5,7 @@ import { motionValue } from 'framer-motion'
 import CinematicCanvas from '../../src/components/home/CinematicCanvas'
 import { useHeroShaderControls } from '../../src/components/home/shaders-glsl/ShaderControls'
 import { HeroRebuildFixture } from './hero-rebuild'
+import { SceneBoundary } from '../../src/components/home/SceneBoundary'
 import '../../src/components/home/shaders-glsl/hero.css'
 
 const results: string[] = []
@@ -21,6 +22,7 @@ let feedbackDraws = 0
 let deletedTextures = 0
 let deletedTargets = 0
 let contexts = 0
+let contextAttempts = 0
 let createdPrograms = 0
 let captureColor = false
 let coloredPixels = 0
@@ -32,6 +34,7 @@ const context = HTMLCanvasElement.prototype.getContext
 const instrumented = new WeakSet<WebGL2RenderingContext>()
 let graphics: WebGL2RenderingContext | null = null
 HTMLCanvasElement.prototype.getContext = function (kind: string, options?: unknown) {
+  if (kind === 'webgl2') contextAttempts++
   const gl = context.call(this, kind as 'webgl2', options as WebGLContextAttributes) as WebGL2RenderingContext | null
   if (kind === 'webgl2' && gl && this.isConnected && !instrumented.has(gl)) {
     instrumented.add(gl); contexts++
@@ -98,6 +101,7 @@ async function run() {
   const root = createRoot(document.getElementById('app')!)
   flushSync(() => root.render(<Fixture />))
   await until(() => ready && alphas.some(value => value > .99), 'Homepage shader loads real KTX2 textures and fades in after its first frame')
+  check(contextAttempts === 1, 'Homepage initializes one WebGL context without a throwaway capability probe')
   check(!unavailable && alphas.some(value => value === 0), 'Fade-in starts transparent before the first presented shader frame')
   const assetRequests = () => performance.getEntriesByType('resource').filter(entry => entry.name.includes('/home-shader-assets/')).length
   const initialAssets = assetRequests()
@@ -195,6 +199,15 @@ async function run() {
   await until(() => !captureColor && coloredPixels > 10, 'The first rebuilt quality frame presents colored shader pixels')
   check(graphics!.getError() === graphics!.NO_ERROR, 'The rebuilt shader draws without WebGL errors')
   flushSync(() => rebuiltRoot.unmount())
+  HTMLCanvasElement.prototype.getContext = function (kind: string, options?: unknown) {
+    return kind === 'webgl2' || kind === 'webgl' ? null : context.call(this, kind as '2d', options as CanvasRenderingContext2DSettings)
+  } as typeof HTMLCanvasElement.prototype.getContext
+  unavailable = false
+  const unsupportedRoot = createRoot(document.getElementById('app')!)
+  flushSync(() => unsupportedRoot.render(<><p id="static-content">The page remains readable.</p><SceneBoundary onError={onUnavailable}><Fixture /></SceneBoundary></>))
+  await until(() => unavailable && !document.querySelector('canvas'), 'An unsupported real renderer reaches the existing scene fallback boundary')
+  check(document.getElementById('static-content')?.textContent === 'The page remains readable.', 'Unsupported WebGL preserves content outside the decorative renderer')
+  flushSync(() => unsupportedRoot.unmount())
   HTMLCanvasElement.prototype.getContext = context
   document.getElementById('result')!.textContent = `${results.join('\n')}\n${results.length} homepage shader browser checks passed`
   document.body.dataset.status = 'passed'

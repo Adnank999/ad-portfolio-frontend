@@ -9,7 +9,8 @@ const loader = process.argv.includes('--loader')
 const installedShaders = process.argv.includes('--installed-shaders')
 const projectArtwork = process.argv.includes('--project-artwork')
 const homeShader = process.argv.includes('--home-shader')
-const graphics = shaders || installedShaders || projectArtwork || homeShader
+const brandLogo = process.argv.includes('--brand-logo')
+const graphics = shaders || installedShaders || projectArtwork || homeShader || brandLogo
 const nativeGpu = process.argv.includes('--native-gpu')
 
 const browser = process.env.CHROME_BIN ?? (process.platform === 'win32'
@@ -33,21 +34,24 @@ const homeAssets = {
     build.onLoad({ filter: /.*/, namespace: 'home-shader-asset' }, args => ({ contents: `export default ${JSON.stringify('/home-shader-assets/' + args.path.slice(homeRoot.length + 1).replaceAll('\\', '/'))}`, loader: 'js' }))
   },
 }
-const bundle = await Bun.build({ entrypoints: [homeShader ? './tests/browser/home-shader.tsx' : loader ? './tests/browser/loading-logo.tsx' : installedShaders ? './tests/browser/shader-library.tsx' : shaders ? './tests/browser/shader-runtime.tsx' : projectArtwork ? './tests/browser/project-artwork.ts' : './src/lib/media/convert-to-webp.ts'], target: 'browser', write: false, plugins: homeShader ? [homeAssets] : shaders || installedShaders ? [shaderDiscovery()] : [] })
+const bundle = await Bun.build({ entrypoints: [brandLogo ? './tests/browser/brand-logo.tsx' : homeShader ? './tests/browser/home-shader.tsx' : loader ? './tests/browser/loading-logo.tsx' : installedShaders ? './tests/browser/shader-library.tsx' : shaders ? './tests/browser/shader-runtime.tsx' : projectArtwork ? './tests/browser/project-artwork.ts' : './src/lib/media/convert-to-webp.ts'], target: 'browser', write: false, loader: brandLogo ? { '.css': 'text' } : {}, plugins: homeShader ? [homeAssets] : shaders || installedShaders ? [shaderDiscovery()] : [] })
 if (!bundle.success) throw new Error('Image conversion browser bundle failed')
 const server = Bun.serve({
   hostname: '127.0.0.1', port: 0,
   fetch(request) {
     const pathname = new URL(request.url).pathname
+    if (brandLogo && pathname === '/logo.svg') return new Promise(resolve => setTimeout(() => resolve(new Response(Bun.file('./public/logo.svg'))), 250))
     if (homeShader && pathname.startsWith('/home-shader-assets/')) {
       const path = resolve(homeRoot, pathname.slice('/home-shader-assets/'.length))
       return path.startsWith(homeRoot + sep) && existsSync(path) ? new Response(Bun.file(path)) : new Response('Not found', { status: 404 })
     }
+    if (brandLogo && pathname === '/logo.css') return new Response(readFileSync('./src/components/global/brand-logo/brand-logo.css', 'utf8') + '\n.brand-logo-effect>.relative{position:relative;width:100%;height:100%;overflow:hidden}', { headers: { 'content-type': 'text/css' } })
     if (loader && pathname === '/loader.css' || homeShader && pathname === '/home-shader.css') return new Response(bundle.outputs.find(output => output.path.endsWith('.css')), { headers: { 'content-type': 'text/css' } })
     if (projectArtwork && new URL(request.url).pathname === '/project-artwork-mask.webp') return new Response(Bun.file('./public/terrain/assets/fbm-mask.webp'))
     return new URL(request.url).pathname === '/media.js'
       ? new Response(bundle.outputs[0], { headers: { 'content-type': 'text/javascript' } })
-      : new Response(Bun.file(homeShader ? './tests/browser/home-shader.html' : loader ? './tests/browser/loading-logo.html' : shaders || installedShaders ? './tests/browser/shader-runtime.html' : projectArtwork ? './tests/browser/project-artwork.html' : './tests/browser/image-conversion.html'))
+      : brandLogo ? new Response('<!doctype html><html lang="en"><head><link rel="stylesheet" href="/logo.css"><style>body{margin:0;background:#151515;color:white}#result{position:fixed;top:80px;white-space:pre-wrap}</style></head><body><div id="app"></div><pre id="result">Running logo checks…</pre><script type="module" src="/media.js"></script></body></html>', { headers: { 'content-type': 'text/html' } })
+        : new Response(Bun.file(homeShader ? './tests/browser/home-shader.html' : loader ? './tests/browser/loading-logo.html' : shaders || installedShaders ? './tests/browser/shader-runtime.html' : projectArtwork ? './tests/browser/project-artwork.html' : './tests/browser/image-conversion.html'))
   },
 })
 try {

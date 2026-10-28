@@ -13,7 +13,6 @@ import { Footer } from "@/components/layout/Footer";
 import { SmoothScrollProvider } from "@/components/layout/SmoothScrollProvider";
 import "@/styles/app.css";
 import "@/components/global/project-transition/projectTransition.css";
-import "@/components/admin/admin.css";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   {
@@ -43,11 +42,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       links: [
         {
           rel: "preload",
-          href: "/fonts/Inter-Variable.ttf",
+          href: "/fonts/Inter-Latin.woff2",
           as: "font",
-          type: "font/ttf",
+          type: "font/woff2",
           crossOrigin: "anonymous",
         },
+        { rel: "icon", href: "/logo.svg", type: "image/svg+xml" },
       ],
     }),
     component: RootDocument,
@@ -72,7 +72,7 @@ function RootDocument() {
     <SmoothScrollProvider>
       <Navbar />
       <Outlet />
-      <Footer />
+      <Footer showContactPrompt={path !== "/" && path !== "/contact"} />
     </SmoothScrollProvider>
   );
 }

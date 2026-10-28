@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react';
-import type { CSSProperties } from 'react';
-import { Renderer, Program, Mesh, Triangle, Texture } from 'ogl';
+import { useEffect, useRef } from "react";
+import type { CSSProperties } from "react";
+import { Renderer, Program, Mesh, Triangle, Texture } from "ogl";
 
 const BOLT = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><path d="M39 3 12 37h17l-4 24 27-34H35z" fill="#fff"/></svg>'
+  '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><path d="M39 3 12 37h17l-4 24 27-34H35z" fill="#fff"/></svg>',
 )}`;
 const RASTER = 560;
 const CELL = 4;
@@ -32,14 +32,24 @@ export interface ElectricLogoProps {
   interactive?: boolean;
   cursorIntensity?: number;
   cursorRadius?: number;
-  theme?: 'dark' | 'light';
+  theme?: "dark" | "light";
+  rasterSize?: number;
+  maxFps?: number;
+  maxDpr?: number;
+  introDuration?: number;
   onRender?: (canvas: HTMLCanvasElement) => void;
+  onUnavailable?: () => void;
   className?: string;
   style?: CSSProperties;
 }
 
-type Settings = Required<Omit<ElectricLogoProps, 'src' | 'className' | 'style' | 'onRender'>> &
-  Pick<ElectricLogoProps, 'onRender'>;
+type Settings = Required<
+  Omit<
+    ElectricLogoProps,
+    "src" | "className" | "style" | "onRender" | "onUnavailable"
+  >
+> &
+  Pick<ElectricLogoProps, "onRender" | "onUnavailable">;
 
 interface Shape {
   field: Float32Array;
@@ -90,13 +100,21 @@ interface Spark {
 }
 
 const hexToRgb = (hex: string): Rgb => {
-  let h = String(hex || '').replace('#', '');
-  if (h.length === 3) h = h.replace(/./g, c => c + c);
+  let h = String(hex || "").replace("#", "");
+  if (h.length === 3) h = h.replace(/./g, (c) => c + c);
   const n = parseInt(h.slice(0, 6), 16);
-  return Number.isNaN(n) ? [1, 1, 1] : [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+  return Number.isNaN(n)
+    ? [1, 1, 1]
+    : [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
 };
 
-const transformLine = (f: Float64Array, d: Float64Array, v: Int32Array, z: Float64Array, n: number) => {
+const transformLine = (
+  f: Float64Array,
+  d: Float64Array,
+  v: Int32Array,
+  z: Float64Array,
+  n: number,
+) => {
   let k = 0;
   v[0] = 0;
   z[0] = -FAR;
@@ -137,7 +155,14 @@ const transformGrid = (grid: Float32Array, w: number, h: number) => {
   }
 };
 
-const blurLine = (src: Float32Array, dst: Float32Array, offset: number, stride: number, n: number, r: number) => {
+const blurLine = (
+  src: Float32Array,
+  dst: Float32Array,
+  offset: number,
+  stride: number,
+  n: number,
+  r: number,
+) => {
   const scale = 1 / (2 * r + 1);
   let sum = 0;
   for (let i = 0; i <= r && i < n; i++) sum += src[offset + i * stride];
@@ -186,7 +211,11 @@ const readCoverage = (data: Uint8ClampedArray, w: number, h: number) => {
   g /= n;
   b /= n;
   for (let i = 0; i < w * h; i++) {
-    const diff = Math.max(Math.abs(data[i * 4] - r), Math.abs(data[i * 4 + 1] - g), Math.abs(data[i * 4 + 2] - b));
+    const diff = Math.max(
+      Math.abs(data[i * 4] - r),
+      Math.abs(data[i * 4 + 1] - g),
+      Math.abs(data[i * 4 + 2] - b),
+    );
     coverage[i] = Math.min(1, Math.max(0, (diff - 24) / 48));
   }
   return coverage;
@@ -202,21 +231,25 @@ const sampleField = (shape: Shape, x: number, y: number) => {
   const ty = cy - 0.5 - y0;
   const i = y0 * width + x0;
   const top = field[i] + (field[i + 1] - field[i]) * tx;
-  const bottom = field[i + width] + (field[i + width + 1] - field[i + width]) * tx;
+  const bottom =
+    field[i + width] + (field[i + width + 1] - field[i + width]) * tx;
   return top + (bottom - top) * ty + Math.hypot(x - cx, y - cy);
 };
 
-const traceShape = (image: HTMLImageElement): Shape | null => {
+const traceShape = (
+  image: HTMLImageElement,
+  rasterSize: number,
+): Shape | null => {
   const iw = image.naturalWidth || image.width;
   const ih = image.naturalHeight || image.height;
   if (!iw || !ih) return null;
-  const fit = RASTER / Math.max(iw, ih);
+  const fit = Math.max(64, Math.min(RASTER, rasterSize)) / Math.max(iw, ih);
   const w = Math.max(2, Math.round(iw * fit));
   const h = Math.max(2, Math.round(ih * fit));
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = w;
   canvas.height = h;
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) return null;
   ctx.drawImage(image, 0, 0, w, h);
   const coverage = readCoverage(ctx.getImageData(0, 0, w, h).data, w, h);
@@ -247,7 +280,8 @@ const traceShape = (image: HTMLImageElement): Shape | null => {
     for (let x = 0; x < width; x++) {
       const sx = x - pad + left;
       const sy = y - pad + top;
-      const a = sx >= 0 && sy >= 0 && sx < w && sy < h ? coverage[sy * w + sx] : 0;
+      const a =
+        sx >= 0 && sy >= 0 && sx < w && sy < h ? coverage[sy * w + sx] : 0;
       const i = y * width + x;
       if (a >= 1) {
         outer[i] = 0;
@@ -266,7 +300,8 @@ const traceShape = (image: HTMLImageElement): Shape | null => {
   transformGrid(inner, width, height);
 
   const field = new Float32Array(width * height);
-  for (let i = 0; i < width * height; i++) field[i] = Math.sqrt(outer[i]) - Math.sqrt(inner[i]);
+  for (let i = 0; i < width * height; i++)
+    field[i] = Math.sqrt(outer[i]) - Math.sqrt(inner[i]);
 
   const points: number[] = [];
   for (let y = 1; y < height - 1; y++) {
@@ -274,7 +309,13 @@ const traceShape = (image: HTMLImageElement): Shape | null => {
       const i = y * width + x;
       const d = field[i];
       if (d > 0) continue;
-      if (field[i - 1] <= 0 && field[i + 1] <= 0 && field[i - width] <= 0 && field[i + width] <= 0) continue;
+      if (
+        field[i - 1] <= 0 &&
+        field[i + 1] <= 0 &&
+        field[i - width] <= 0 &&
+        field[i + width] <= 0
+      )
+        continue;
       const gx = field[i + 1] - field[i - 1];
       const gy = field[i + width] - field[i - width];
       const len = Math.hypot(gx, gy) || 1;
@@ -283,7 +324,8 @@ const traceShape = (image: HTMLImageElement): Shape | null => {
   }
   const stride = Math.max(1, Math.ceil(points.length / 2 / 3000)) * 2;
   const edges: number[] = [];
-  for (let i = 0; i < points.length; i += stride) edges.push(points[i], points[i + 1]);
+  for (let i = 0; i < points.length; i += stride)
+    edges.push(points[i], points[i + 1]);
 
   const size = Math.max(logoWidth, logoHeight);
   const glowPad = Math.ceil((size * 0.7) / CELL);
@@ -294,7 +336,8 @@ const traceShape = (image: HTMLImageElement): Shape | null => {
     const gy = Math.floor((y - pad) / CELL) + glowPad;
     for (let x = 0; x < width; x++) {
       const gx = Math.floor((x - pad) / CELL) + glowPad;
-      tight[gy * glowWidth + gx] += Math.exp(-Math.abs(field[y * width + x]) / 1.5) / (CELL * CELL);
+      tight[gy * glowWidth + gx] +=
+        Math.exp(-Math.abs(field[y * width + x]) / 1.5) / (CELL * CELL);
     }
   }
   const wide = tight.slice();
@@ -302,8 +345,13 @@ const traceShape = (image: HTMLImageElement): Shape | null => {
   const wideRadius = Math.max(2, Math.round((size * 0.13) / CELL));
   blurGrid(tight, glowWidth, glowHeight, tightRadius);
   blurGrid(wide, glowWidth, glowHeight, wideRadius);
-  const tightNorm = (Math.sqrt(2 * Math.PI * (tightRadius * tightRadius + tightRadius)) * CELL) / 3;
-  const wideNorm = (Math.sqrt(2 * Math.PI * (wideRadius * wideRadius + wideRadius)) * CELL) / 3;
+  const tightNorm =
+    (Math.sqrt(2 * Math.PI * (tightRadius * tightRadius + tightRadius)) *
+      CELL) /
+    3;
+  const wideNorm =
+    (Math.sqrt(2 * Math.PI * (wideRadius * wideRadius + wideRadius)) * CELL) /
+    3;
   const glow = new Float32Array(glowWidth * glowHeight * 2);
   for (let i = 0; i < glowWidth * glowHeight; i++) {
     glow[i * 2] = tight[i] * tightNorm;
@@ -321,11 +369,43 @@ const traceShape = (image: HTMLImageElement): Shape | null => {
     glow,
     glowWidth,
     glowHeight,
-    glowOffset: pad - glowPad * CELL
+    glowOffset: pad - glowPad * CELL,
   };
 };
 
-const spawnArc = (shape: Shape, time: number, focus: Focus | null): Spark | null => {
+const shapeCache = new Map<string, Promise<Shape | null>>();
+const loadShape = (src: string, rasterSize: number) => {
+  const key = `${rasterSize}:${src}`;
+  const cached = shapeCache.get(key);
+  if (cached) return cached;
+  const promise = new Promise<Shape | null>((resolve) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.decoding = "async";
+    image.onload = () => {
+      try {
+        resolve(traceShape(image, rasterSize));
+      } catch {
+        shapeCache.delete(key);
+        resolve(null);
+      }
+    };
+    image.onerror = () => {
+      shapeCache.delete(key);
+      resolve(null);
+    };
+    image.src = src;
+  });
+  if (shapeCache.size >= 4) shapeCache.delete(shapeCache.keys().next().value!);
+  shapeCache.set(key, promise);
+  return promise;
+};
+
+const spawnArc = (
+  shape: Shape,
+  time: number,
+  focus: Focus | null,
+): Spark | null => {
   const { edges, logoWidth, logoHeight } = shape;
   const count = edges.length / 2;
   if (count < 2) return null;
@@ -335,7 +415,10 @@ const spawnArc = (shape: Shape, time: number, focus: Focus | null): Spark | null
     let found = false;
     for (let attempt = 0; attempt < 40 && !found; attempt++) {
       const j = Math.floor(Math.random() * count);
-      if (Math.hypot(edges[j * 2] - focus.x, edges[j * 2 + 1] - focus.y) < focus.radius) {
+      if (
+        Math.hypot(edges[j * 2] - focus.x, edges[j * 2 + 1] - focus.y) <
+        focus.radius
+      ) {
         i = j;
         found = true;
       }
@@ -366,7 +449,7 @@ const spawnArc = (shape: Shape, time: number, focus: Focus | null): Spark | null
       bow: left >= right ? bow : -bow,
       seed: 1 + Math.random() * 60,
       born: time,
-      life: 0.35 + Math.random() * 0.45
+      life: 0.35 + Math.random() * 0.45,
     };
   }
   return null;
@@ -653,8 +736,8 @@ void main() {
 
 const ElectricLogo = ({
   src = BOLT,
-  color = '#ecc7ff',
-  glowColor = '#ad6dff',
+  color = "#ecc7ff",
+  glowColor = "#ad6dff",
   scale = 0.7,
   intensity = 1,
   glow = 1,
@@ -669,14 +752,20 @@ const ElectricLogo = ({
   interactive = true,
   cursorIntensity = 0.75,
   cursorRadius = 100,
-  theme = 'dark',
+  theme = "dark",
+  rasterSize = RASTER,
+  maxFps = 60,
+  maxDpr = 2,
+  introDuration = 1.4,
   onRender,
-  className = '',
-  style
+  onUnavailable,
+  className = "",
+  style,
 }: ElectricLogoProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<Settings | null>(null);
   const shapeRef = useRef<Shape | null>(null);
+  const requestRender = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     settingsRef.current = {
@@ -697,53 +786,51 @@ const ElectricLogo = ({
       cursorIntensity,
       cursorRadius,
       theme,
-      onRender
+      rasterSize,
+      maxFps,
+      maxDpr,
+      introDuration,
+      onRender,
+      onUnavailable,
     };
+    requestRender.current?.();
   });
 
   useEffect(() => {
     let alive = true;
-    const image = new Image();
-    image.crossOrigin = 'anonymous';
-    image.decoding = 'async';
-    image.onload = () => {
+    loadShape(src || BOLT, rasterSize).then((traced) => {
       if (!alive) return;
-      let traced: Shape | null = null;
-      try {
-        traced = traceShape(image);
-      } catch {
-        traced = null;
-      }
-      if (traced) shapeRef.current = traced;
-    };
-    image.src = src || BOLT;
+      if (traced) {
+        shapeRef.current = traced;
+        requestRender.current?.();
+      } else settingsRef.current?.onUnavailable?.();
+    });
     return () => {
       alive = false;
-      image.onload = null;
     };
-  }, [src]);
+  }, [src, rasterSize]);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return undefined;
 
     const renderer = new Renderer({
-      dpr: Math.min(window.devicePixelRatio || 1, 2),
+      dpr: Math.min(window.devicePixelRatio || 1, maxDpr),
       alpha: true,
       premultipliedAlpha: true,
-      antialias: false
+      antialias: false,
     });
     const gl = renderer.gl;
     const gl2 = gl as WebGL2RenderingContext;
     if (!renderer.isWebgl2) {
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      gl.getExtension("WEBGL_lose_context")?.loseContext();
       return undefined;
     }
     gl.clearColor(0, 0, 0, 0);
     const canvas = gl.canvas;
-    canvas.style.display = 'block';
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
+    canvas.style.display = "block";
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
     container.appendChild(canvas);
 
     const makeSlot = (): Slot => ({
@@ -759,7 +846,7 @@ const ElectricLogo = ({
         magFilter: gl.LINEAR,
         generateMipmaps: false,
         flipY: false,
-        unpackAlignment: 1
+        unpackAlignment: 1,
       }),
       glow: new Texture(gl, {
         image: new Float32Array([0, 0]),
@@ -772,8 +859,8 @@ const ElectricLogo = ({
         magFilter: gl.LINEAR,
         generateMipmaps: false,
         flipY: false,
-        unpackAlignment: 1
-      })
+        unpackAlignment: 1,
+      }),
     });
     const slots = [makeSlot(), makeSlot()];
 
@@ -811,14 +898,21 @@ const ElectricLogo = ({
       uFill: { value: 0.5 },
       uInk: { value: 0 },
       uArcEnds: { value: arcEnds },
-      uArcShape: { value: arcShape }
+      uArcShape: { value: arcShape },
     };
     const mesh = new Mesh(gl, {
       geometry: new Triangle(gl),
-      program: new Program(gl, { vertex, fragment, uniforms, depthTest: false, depthWrite: false })
+      program: new Program(gl, {
+        vertex,
+        fragment,
+        uniforms,
+        depthTest: false,
+        depthWrite: false,
+      }),
     });
 
-    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let reducedMotion = preference.matches;
     const pointer = { x: 0, y: 0, over: false };
     const hover = { x: 0, y: 0, vx: 0, vy: 0, power: 0 };
     const sparks: Spark[] = [];
@@ -831,7 +925,7 @@ const ElectricLogo = ({
     let ink = 0;
     const hues = [
       [1, 1, 1],
-      [1, 1, 1]
+      [1, 1, 1],
     ];
     let settled = false;
     let time = 0;
@@ -854,26 +948,41 @@ const ElectricLogo = ({
     };
 
     const place = (shape: Shape, s: Settings) => {
-      const fit = Math.max(1e-4, Math.min((width * s.scale) / shape.logoWidth, (height * s.scale) / shape.logoHeight));
+      const fit = Math.max(
+        1e-4,
+        Math.min(
+          (width * s.scale) / shape.logoWidth,
+          (height * s.scale) / shape.logoHeight,
+        ),
+      );
       return {
         fit,
         ox: width / 2 - (shape.pad + shape.logoWidth / 2) * fit,
         oy: height / 2 - (shape.pad + shape.logoHeight / 2) * fit,
-        unit: (Math.max(shape.logoWidth, shape.logoHeight) * fit) / 100
+        unit: (Math.max(shape.logoWidth, shape.logoHeight) * fit) / 100,
       };
     };
 
     const resize = () => {
       width = Math.max(1, container.clientWidth);
       height = Math.max(1, container.clientHeight);
-      renderer.dpr = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(PIXEL_BUDGET / (width * height)));
+      renderer.dpr = Math.min(
+        window.devicePixelRatio || 1,
+        settingsRef.current?.maxDpr ?? 2,
+        Math.sqrt(PIXEL_BUDGET / (width * height)),
+      );
       renderer.setSize(width, height);
       uniforms.uResolution.value = [width, height];
     };
 
     const frame = (now: number) => {
       raf = 0;
+      if (!visible || document.hidden) return;
       const s = settingsRef.current;
+      if (now - last < 1000 / Math.max(1, Math.min(60, s?.maxFps ?? 60)) - 1) {
+        raf = requestAnimationFrame(frame);
+        return;
+      }
       const dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
       last = now;
 
@@ -892,7 +1001,11 @@ const ElectricLogo = ({
 
       const to = slots[target].shape;
       const from = morph < 1 ? slots[1 - target].shape : null;
-      if (to) progress = Math.min(1, progress + dt / 1.4);
+      if (to)
+        progress =
+          reducedMotion || !s?.introDuration
+            ? 1
+            : Math.min(1, progress + dt / s.introDuration);
       const presence = progress * progress * (3 - 2 * progress);
 
       if (to && s) {
@@ -912,9 +1025,11 @@ const ElectricLogo = ({
         hover.vy += ((pointer.y - hover.y) * 120 - hover.vy * 19) * dt;
         hover.x += hover.vx * dt;
         hover.y += hover.vy * dt;
-        hover.power += ((engaged ? 1 : 0) - hover.power) * (1 - Math.exp(-dt / (engaged ? 0.3 : 0.55)));
+        hover.power +=
+          ((engaged ? 1 : 0) - hover.power) *
+          (1 - Math.exp(-dt / (engaged ? 0.3 : 0.55)));
 
-        const motion = reducedMotion ? 0.2 : 1;
+        const motion = reducedMotion ? 0 : 1;
         time += dt * s.speed * motion;
 
         for (let i = sparks.length - 1; i >= 0; i--) {
@@ -923,7 +1038,7 @@ const ElectricLogo = ({
         const focus = (spot: Point): Focus => ({
           x: (spot.x - near.ox) / near.fit,
           y: (spot.y - near.oy) / near.fit,
-          radius: Math.max(1, s.cursorRadius) / near.fit
+          radius: Math.max(1, s.cursorRadius) / near.fit,
         });
         if (burst && morph >= 1 && s.arcs > 0) {
           for (let i = 0; i < 3 && sparks.length < ARCS; i++) {
@@ -932,7 +1047,12 @@ const ElectricLogo = ({
           }
         }
         burst = null;
-        if (!reducedMotion && presence > 0.8 && morph >= 1 && sparks.length < ARCS) {
+        if (
+          !reducedMotion &&
+          presence > 0.8 &&
+          morph >= 1 &&
+          sparks.length < ARCS
+        ) {
           const chance = dt * s.speed * s.arcs;
           if (Math.random() < chance * 6 * hover.power * s.cursorIntensity) {
             const spark = spawnArc(to, time, focus(hover));
@@ -956,7 +1076,8 @@ const ElectricLogo = ({
           arcEnds[o + 2] = near.ox + spark.bx * near.fit;
           arcEnds[o + 3] = near.oy + spark.by * near.fit;
           arcShape[o] = spark.bow * near.fit;
-          arcShape[o + 1] = Math.sin(Math.PI * Math.min(1, Math.max(0, k))) * presence;
+          arcShape[o + 1] =
+            Math.sin(Math.PI * Math.min(1, Math.max(0, k))) * presence;
           arcShape[o + 2] = spark.seed;
         }
 
@@ -987,16 +1108,30 @@ const ElectricLogo = ({
         uniforms.tFieldFrom.value = fromSlot.field;
         uniforms.tGlowFrom.value = fromSlot.glow;
         uniforms.uMapTo.value = [near.ox, near.oy, near.fit, to.glowOffset];
-        uniforms.uSizeTo.value = [to.width, to.height, to.glowWidth, to.glowHeight];
+        uniforms.uSizeTo.value = [
+          to.width,
+          to.height,
+          to.glowWidth,
+          to.glowHeight,
+        ];
         if (from) {
           uniforms.uMapFrom.value = [far.ox, far.oy, far.fit, from.glowOffset];
-          uniforms.uSizeFrom.value = [from.width, from.height, from.glowWidth, from.glowHeight];
+          uniforms.uSizeFrom.value = [
+            from.width,
+            from.height,
+            from.glowWidth,
+            from.glowHeight,
+          ];
         }
         uniforms.uMorph.value = morph;
         uniforms.uUnit.value = unit;
         uniforms.uTime.value = time;
         uniforms.uPresence.value = presence;
-        uniforms.uHover.value = [hover.x, hover.y, hover.power * Math.max(0, s.cursorIntensity)];
+        uniforms.uHover.value = [
+          hover.x,
+          hover.y,
+          hover.power * Math.max(0, s.cursorIntensity),
+        ];
         uniforms.uHoverRadius.value = Math.max(1, s.cursorRadius);
         uniforms.uPulseBoost.value = boost;
         uniforms.uFlash.value = flash;
@@ -1004,32 +1139,60 @@ const ElectricLogo = ({
         const shift = settled ? 1 - Math.exp(-dt / 0.35) : 1;
         settled = true;
         for (let i = 0; i < 2; i++) {
-          for (let c = 0; c < 3; c++) hues[i][c] += (targets[i][c] - hues[i][c]) * shift;
+          for (let c = 0; c < 3; c++)
+            hues[i][c] += (targets[i][c] - hues[i][c]) * shift;
         }
         uniforms.uColor.value = hues[0].slice();
         uniforms.uGlowColor.value = hues[1].slice();
         uniforms.uIntensity.value = s.intensity;
         uniforms.uGlow.value = s.glow;
         uniforms.uThickness.value = s.thickness;
-        uniforms.uStrands.value = Math.max(1, Math.min(6, Math.round(s.strands)));
+        uniforms.uStrands.value = Math.max(
+          1,
+          Math.min(6, Math.round(s.strands)),
+        );
         uniforms.uBend.value = s.bend;
         uniforms.uCrackle.value = s.crackle;
         uniforms.uFlicker.value = reducedMotion ? 0 : s.flicker;
-        ink += ((s.theme === 'light' ? 1 : 0) - ink) * (1 - Math.exp(-dt / 0.25));
+        ink +=
+          ((s.theme === "light" ? 1 : 0) - ink) * (1 - Math.exp(-dt / 0.25));
         uniforms.uFill.value = s.fill;
         uniforms.uInk.value = ink;
         renderer.render({ scene: mesh });
         s.onRender?.(canvas);
       }
 
-      if (visible) raf = requestAnimationFrame(frame);
+      if (visible && !document.hidden && !reducedMotion)
+        raf = requestAnimationFrame(frame);
     };
 
     const start = () => {
-      if (raf || !visible) return;
+      if (raf || !visible || document.hidden) return;
       last = performance.now();
       raf = requestAnimationFrame(frame);
     };
+    const stop = () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+    };
+    const updateVisibility = () => {
+      if (visible && !document.hidden) start();
+      else stop();
+    };
+    const updateMotion = () => {
+      reducedMotion = preference.matches;
+      stop();
+      start();
+    };
+    const lost = (event: Event) => {
+      event.preventDefault();
+      stop();
+      settingsRef.current?.onUnavailable?.();
+    };
+    requestRender.current = start;
+    document.addEventListener("visibilitychange", updateVisibility);
+    preference.addEventListener("change", updateMotion);
+    canvas.addEventListener("webglcontextlost", lost);
 
     const onMove = (e: PointerEvent) => {
       const rect = container.getBoundingClientRect();
@@ -1047,16 +1210,16 @@ const ElectricLogo = ({
     const onLeave = () => {
       pointer.over = false;
     };
-    container.addEventListener('pointermove', onMove);
-    container.addEventListener('pointerdown', onDown);
-    container.addEventListener('pointerleave', onLeave);
-    container.addEventListener('pointercancel', onLeave);
+    container.addEventListener("pointermove", onMove);
+    container.addEventListener("pointerdown", onDown);
+    container.addEventListener("pointerleave", onLeave);
+    container.addEventListener("pointercancel", onLeave);
 
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(container);
     const intersectionObserver = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
-      start();
+      updateVisibility();
     });
     intersectionObserver.observe(container);
 
@@ -1065,20 +1228,28 @@ const ElectricLogo = ({
 
     return () => {
       visible = false;
-      cancelAnimationFrame(raf);
+      stop();
+      requestRender.current = null;
+      document.removeEventListener("visibilitychange", updateVisibility);
+      preference.removeEventListener("change", updateMotion);
+      canvas.removeEventListener("webglcontextlost", lost);
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
-      container.removeEventListener('pointermove', onMove);
-      container.removeEventListener('pointerdown', onDown);
-      container.removeEventListener('pointerleave', onLeave);
-      container.removeEventListener('pointercancel', onLeave);
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      container.removeEventListener("pointermove", onMove);
+      container.removeEventListener("pointerdown", onDown);
+      container.removeEventListener("pointerleave", onLeave);
+      container.removeEventListener("pointercancel", onLeave);
+      gl.getExtension("WEBGL_lose_context")?.loseContext();
       if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
     };
   }, []);
 
   return (
-    <div ref={containerRef} className={`relative w-full h-full overflow-hidden ${className}`.trim()} style={style} />
+    <div
+      ref={containerRef}
+      className={`relative w-full h-full overflow-hidden ${className}`.trim()}
+      style={style}
+    />
   );
 };
 

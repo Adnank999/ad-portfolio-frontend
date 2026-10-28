@@ -14,6 +14,7 @@
     "test:unit": "bun test --preload ./tests/setup.ts ./tests",
     "test:media:browser": "bun ./tests/browser/run-image-conversion.mjs",
     "test:loader:browser": "bun ./tests/browser/run-image-conversion.mjs --loader",
+    "test:logo:browser": "bun ./tests/browser/run-image-conversion.mjs --brand-logo",
     "shader:add": "node scripts/shaders/add.mjs",
     "shader:check": "bun scripts/shaders/manifest.ts --check",
     "shader:manifest": "bun scripts/shaders/manifest.ts",

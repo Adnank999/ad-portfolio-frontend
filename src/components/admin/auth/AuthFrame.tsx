@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { ArrowLeft, ShieldCheck } from 'lucide-react'
 import { Card, CardContent } from '@/components/admin/ui/card'
+import './auth.css'
 
 export function AuthFrame({ eyebrow, title, description, children }: { eyebrow: string; title: string; description: string; children: ReactNode }) {
   return <main className="auth-shell relative flex min-h-screen items-center justify-center overflow-hidden bg-[#08080b] px-4 py-16 text-white">

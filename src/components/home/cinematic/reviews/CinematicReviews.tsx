@@ -78,7 +78,7 @@ export function CinematicReviews({ still, reviews = sampleReviews }: { still: bo
         {reviews.map((review) => <ReviewCard key={review.id} review={review} still={still} />)}
       </ul>
       <div className="cinema-wrap relative flex flex-wrap items-center justify-between gap-4 pt-5">
-        <button type="button" aria-label={paused ? "Resume toolkit animation" : "Pause toolkit animation"} aria-pressed={paused} disabled={still} onClick={() => setPaused(!paused)} className="flex min-h-11 items-center gap-2 font-mono! text-[10px]! uppercase tracking-wider text-white/55 hover:text-white disabled:cursor-default disabled:opacity-50">
+        <button type="button" aria-label={still ? "Motion reduced" : paused ? "Resume motion in the toolkit" : "Pause motion in the toolkit"} aria-pressed={paused} disabled={still} onClick={() => setPaused(!paused)} className="flex min-h-11 items-center gap-2 font-mono! text-[10px]! uppercase tracking-wider text-white/55 hover:text-white disabled:cursor-default disabled:opacity-50">
           {paused || still ? <Play size={13} aria-hidden="true" /> : <Pause size={13} aria-hidden="true" />}
           {still ? "Motion reduced" : paused ? "Resume motion" : "Pause motion"}
         </button>

@@ -16,7 +16,7 @@ afterEach(cleanup)
 
 test('shader activation has its own guarded route and sidebar entry, not a service form panel', () => {
   const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')
-  const navigation = read('../src/routes/admin/route.tsx')
+  const navigation = read('../src/components/admin/AdminLayout.tsx')
   const route = read('../src/routes/admin/shaders.tsx')
   const serviceFields = read('../src/components/admin/service-fields/ServiceFields.tsx')
   expect(navigation).toContain("to: '/admin/shaders', label: 'Shaders'")

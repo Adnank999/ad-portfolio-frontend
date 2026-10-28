@@ -63,7 +63,7 @@ describe('site navigation and global accent', () => {
     expect(styles).toContain('prefers-reduced-motion')
     expect(source('styles/app.css')).toContain('--color-accent: #C21E56;')
     expect(source('styles/app.css')).toContain('--accent-rgb: 194 30 86;')
-    expect(source('components/layout/Navbar.tsx')).toContain('glowColor="#C21E56"')
+    expect(source('components/global/brand-logo/BrandLogo.tsx')).toContain('glowColor="#C21E56"')
     for (const path of ['styles/homepage.css', 'styles/navbar.css']) expect(source(path)).toContain(': var(--accent);')
   })
 
@@ -73,7 +73,7 @@ describe('site navigation and global accent', () => {
     expect(navigationStyles).toContain('backdrop-filter: blur(20px);')
     expect(navigationStyles).toContain('.site-sign-in::before')
     expect(navigationStyles).not.toContain('background: var(--accent-text-gradient);')
-    expect(source('components/admin/admin.css')).toContain('.auth-shell .bg-accent-500 { background-image: var(--accent-text-gradient);')
+    expect(source('components/admin/auth/auth.css')).toContain('.auth-shell .bg-accent-500 { background-image: var(--accent-text-gradient);')
   })
 
   test('clips the two-color gradient to text without clipping badge surfaces or SVG icons', () => {

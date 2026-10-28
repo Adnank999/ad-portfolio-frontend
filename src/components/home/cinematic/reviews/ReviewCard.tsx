@@ -29,7 +29,7 @@ export function ReviewCard({ review, still }: { review: Review; still: boolean }
           type="button"
           aria-expanded={expanded}
           aria-controls={quoteId}
-          aria-label={`${expanded ? "Collapse" : "Read full"} review from ${review.name}`}
+          aria-label={`${expanded ? "Read less" : "Read more"} about the review from ${review.name}`}
           onClick={() => setExpanded(!expanded)}
           className="flex min-h-11 items-center gap-2 self-start font-mono! text-[10px]! uppercase tracking-[0.12em] text-accent hover:text-white"
         >

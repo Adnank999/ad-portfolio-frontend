@@ -35,7 +35,12 @@ describe('code with purpose section', () => {
     expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(3)
     expect(screen.getByText(/with human review where it matters/)).toBeTruthy()
     expect(screen.getByRole('button').hasAttribute('disabled')).toBe(true)
-    expect(document.querySelectorAll('.value-particle-fallback circle')).toHaveLength(280)
+    const fallback = document.querySelector<HTMLImageElement>('.value-particle-fallback')!
+    expect(fallback.loading).toBe('lazy')
+    expect(fallback.alt).toBe('')
+    const artwork = readFileSync(new URL('../public/images/value-particles.svg', import.meta.url), 'utf8')
+    expect(artwork.match(/<circle /g)).toHaveLength(280)
+    expect(artwork).toContain('viewBox="0 0 520 520"')
     expect(document.querySelector('.value-particle-stage')?.hasAttribute('data-value-particles')).toBe(true)
     expect(document.querySelector('.value-layout')?.firstElementChild?.classList.contains('value-copy')).toBe(true)
   })

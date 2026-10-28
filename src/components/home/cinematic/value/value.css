@@ -3,7 +3,7 @@
 .value-visual { min-width: 0; position: relative; }
 .value-visual-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--home-line); }
 .value-visual-heading > span { color: var(--home-muted); font: 9px/1.8 var(--font-body); letter-spacing: .07em; }
-.value-visual-heading > span:last-child { white-space: nowrap; color: var(--accent); }
+.value-visual-heading > span:last-child { white-space: nowrap; color: #ec9bb7; }
 .value-particle-stage { position: relative; aspect-ratio: 1; isolation: isolate; }
 .value-particle-fallback { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity .2s; }
 [data-value-particles-ready='true'] .value-particle-fallback { opacity: 0; }

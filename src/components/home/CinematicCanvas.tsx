@@ -84,7 +84,7 @@ function CinematicScene(props: CinematicSceneProps & { heroVisible: boolean; her
 }
 
 export default function CinematicCanvas(props: CinematicSceneProps & { onUnavailable: () => void }) {
-  const [supported, setSupported] = useState(false)
+  const [supported, setSupported] = useState(true)
   const [experimentVisible, setExperimentVisible] = useState(false)
   const [experimentRequested, setExperimentRequested] = useState(false)
   const [documentVisible, setDocumentVisible] = useState(true)
@@ -102,16 +102,6 @@ export default function CinematicCanvas(props: CinematicSceneProps & { onUnavail
     const timer = window.setInterval(() => invalidateRef.current?.(), 1000 / 30)
     return () => window.clearInterval(timer)
   }, [supported, props.compact, continuous])
-
-  useEffect(() => {
-    const probe = document.createElement('canvas')
-    try {
-      const context = probe.getContext('webgl2', { failIfMajorPerformanceCaveat: true })
-      setSupported(Boolean(context))
-      if (!context) props.onUnavailable()
-      context?.getExtension('WEBGL_lose_context')?.loseContext()
-    } catch { setSupported(false); props.onUnavailable() }
-  }, [props.onUnavailable])
 
   useEffect(() => {
     const experiment = props.experimentRef.current
@@ -140,7 +130,7 @@ export default function CinematicCanvas(props: CinematicSceneProps & { onUnavail
 
   if (!supported) return null
   return <div className="cinema-webgl" data-hero-visible={heroVisible} data-hero-allocated={heroMounted} aria-hidden="true">
-    <Canvas ref={canvasRef} onCreated={({ invalidate, gl }) => { invalidateRef.current = invalidate; gl.setClearColor('#171717', 1) }} camera={{ position: [0, 0, 5], fov: 45 }} dpr={props.compact || lowQuality ? 1 : [1, 1.5]} frameloop={continuous && !props.compact ? 'always' : 'demand'} gl={{ alpha: false, antialias: !props.compact, powerPreference: props.compact ? 'low-power' : 'high-performance' }} fallback={null}>
+    <Canvas ref={canvasRef} onCreated={({ invalidate, gl }) => { invalidateRef.current = invalidate; gl.setClearColor('#171717', 1) }} camera={{ position: [0, 0, 5], fov: 45 }} dpr={props.compact || lowQuality ? 1 : [1, 1.5]} frameloop={continuous && !props.compact ? 'always' : 'demand'} gl={{ alpha: false, antialias: !props.compact, failIfMajorPerformanceCaveat: true, powerPreference: props.compact ? 'low-power' : 'high-performance' }} fallback={null}>
       {continuous && <PerformanceMonitor onDecline={() => setLowQuality(true)} flipflops={1} onFallback={() => setLowQuality(true)} />}
       <CinematicScene {...props} heroVisible={heroVisible} heroMounted={heroMounted} heroRequested={heroRequested} experimentVisible={experimentVisible} experimentRequested={experimentRequested} lowQuality={lowQuality} />
     </Canvas>

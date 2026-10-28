@@ -1,18 +1,18 @@
 import { afterEach, expect, test } from 'bun:test'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import { readFileSync } from 'node:fs'
 import { EditorialAccordion } from '../src/components/global/editorial-accordion/EditorialAccordion'
 import { ContactPage } from '../src/components/global/contact-page/ContactPage'
 import { SiteFooter } from '../src/components/global/site-footer/SiteFooter'
-import { enquiryMailto, enquirySchema, formatEnquiry, validContactEmail } from '../src/components/global/contact-page/contact-channels'
+import { contactSubmissionSchema, enquirySchema, validContactEmail, type ContactResult, type ContactSubmission } from '../src/components/global/contact-page/contact-channels'
 import { withoutAppendedFaq } from '../src/lib/articleFaq'
 import { TestRouter } from './helpers/TestRouter'
 import { publicServiceCopy } from '../src/lib/services/public-service-copy'
 import type { PublishedService } from '../src/lib/services/services'
 
 afterEach(cleanup)
-const enquiry = { name: 'Alex Morgan', email: 'alex@test.invalid', interest: 'A new website' as const, message: 'A booking website with a clear enquiry flow.', timeline: 'Exploring options' as const }
+const enquiry = { name: 'Alex Morgan', email: 'alex@test.invalid', subject: 'A new website', message: 'A booking website with a clear enquiry flow.' }
 
 test('legacy CMS positioning is neutral in public copy and structured data without overwriting saved content', () => {
   const before = 'I am an independent developer based in Bangladesh. Whether that location is nearshore to you depends on where your team works. This service is a direct collaboration with me; staffing a larger team is outside the standard scope.'
@@ -51,35 +51,65 @@ test('FAQ SSR keeps original answers and strips only the appended generated blog
   expect(markup).toContain('hidden=""')
 })
 
-test('enquiry drafts validate input and safely encode the email handoff without claiming delivery', () => {
+test('enquiries validate length, addresses, header injection and server-owned fields', () => {
   expect(enquirySchema.safeParse(enquiry).success).toBe(true)
   expect(enquirySchema.safeParse({ ...enquiry, message: 'short' }).success).toBe(false)
   expect(enquirySchema.safeParse({ ...enquiry, email: 'not-an-email' }).success).toBe(false)
   expect(validContactEmail('javascript:bad')).toBeNull()
-  expect(() => enquiryMailto('invalid', enquiry)).toThrow()
-  const mailto = enquiryMailto('owner@test.invalid', { ...enquiry, message: 'Build a site & keep the enquiry? Test #1.' })
-  expect(mailto).toStartWith('mailto:owner@test.invalid?subject=')
-  expect(decodeURIComponent(mailto.split('&body=')[1])).toContain('Build a site & keep the enquiry? Test #1.')
-  expect(formatEnquiry(enquiry)).toContain('Email: alex@test.invalid')
+  expect(enquirySchema.safeParse({ ...enquiry, subject: 'Hi\nBcc: attacker@test.invalid' }).success).toBe(false)
+  expect(enquirySchema.safeParse({ ...enquiry, message: 'x'.repeat(4001) }).success).toBe(false)
+  expect(contactSubmissionSchema.safeParse({ ...enquiry, requestId: crypto.randomUUID(), to: 'attacker@test.invalid' }).success).toBe(false)
+  expect(contactSubmissionSchema.safeParse({ ...enquiry, requestId: 'bad' }).success).toBe(false)
 })
 
-test('contact form prepares a reviewable brief, retains edits and never invents a receiving address', () => {
+test('contact form sends directly, prevents duplicate clicks and retries uncertain delivery with the same key', async () => {
   const original = globalThis.FormData
   globalThis.FormData = window.FormData as typeof FormData
   try {
-    const view = render(<TestRouter><ContactPage email="owner@test.invalid" /></TestRouter>)
+    const calls: ContactSubmission[] = []
+    let finish!: (value: ContactResult) => void
+    const send = (input: ContactSubmission) => { calls.push(input); return new Promise<ContactResult>(resolve => { finish = resolve }) }
+    const view = render(<TestRouter><ContactPage email={null} whatsapp={null} sendEnquiry={send} /></TestRouter>)
     fireEvent.change(screen.getByLabelText('Your name'), { target: { value: enquiry.name } })
     fireEvent.change(screen.getByLabelText('Email address'), { target: { value: enquiry.email } })
-    fireEvent.change(screen.getByLabelText('A little about the project'), { target: { value: enquiry.message } })
+    fireEvent.change(screen.getByLabelText('Subject'), { target: { value: enquiry.subject } })
+    fireEvent.change(screen.getByLabelText('Message'), { target: { value: enquiry.message } })
     fireEvent.submit(view.container.querySelector('form')!)
-    expect(screen.getByRole('link', { name: 'Open email draft' }).getAttribute('href')).toContain('mailto:owner@test.invalid')
-    expect(screen.getByRole('status').textContent).toContain('press Send in your email app')
-    fireEvent.change(screen.getByLabelText('Your name'), { target: { value: 'Alex Updated' } })
-    expect(screen.queryByRole('status')).toBeNull()
-    expect((screen.getByLabelText('A little about the project') as HTMLTextAreaElement).value).toBe(enquiry.message)
-    view.unmount()
-    render(<TestRouter><ContactPage email={null} whatsapp={null} /></TestRouter>)
-    expect(screen.queryByRole('link', { name: /@/ })).toBeNull()
+    fireEvent.submit(view.container.querySelector('form')!)
+    expect(calls).toHaveLength(1)
+    expect((screen.getByRole('button', { name: 'Sending…' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByRole('status').textContent).not.toContain('sent')
+    await act(async () => finish({ ok: false, message: 'Email unavailable. Please retry.' }))
+    expect(screen.getByRole('alert').textContent).toContain('retry')
+    expect((screen.getByLabelText('Message') as HTMLTextAreaElement).value).toBe(enquiry.message)
+    fireEvent.submit(view.container.querySelector('form')!)
+    expect(calls[1].requestId).toBe(calls[0].requestId)
+    expect(calls[1]).toMatchObject({ ...enquiry, website: '' })
+    await act(async () => finish({ ok: true }))
+    expect(screen.getByRole('status').textContent).toContain('enquiry has been sent')
+    expect((screen.getByLabelText('Message') as HTMLTextAreaElement).value).toBe('')
+    expect(screen.queryByRole('link', { name: 'Open email draft' })).toBeNull()
+    expect(screen.queryByText('Prepare my enquiry')).toBeNull()
+  } finally { globalThis.FormData = original }
+})
+
+test('contact failures preserve text and edited enquiries receive a new retry key', async () => {
+  const original = globalThis.FormData
+  globalThis.FormData = window.FormData as typeof FormData
+  try {
+    const calls: ContactSubmission[] = []
+    const view = render(<TestRouter><ContactPage sendEnquiry={async input => { calls.push(input); throw new Error('Network unavailable') }} /></TestRouter>)
+    const form = view.container.querySelector('form')!
+    fireEvent.submit(form)
+    expect(calls).toHaveLength(0)
+    for (const [label, value] of [['Your name', enquiry.name], ['Email address', enquiry.email], ['Subject', enquiry.subject], ['Message', enquiry.message]]) fireEvent.change(screen.getByLabelText(label), { target: { value } })
+    fireEvent.submit(form)
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('could not be confirmed'))
+    expect((screen.getByLabelText('Message') as HTMLTextAreaElement).value).toBe(enquiry.message)
+    fireEvent.change(screen.getByLabelText('Subject'), { target: { value: 'Updated project' } })
+    fireEvent.submit(form)
+    await waitFor(() => expect(calls).toHaveLength(2))
+    expect(calls[1].requestId).not.toBe(calls[0].requestId)
   } finally { globalThis.FormData = original }
 })
 

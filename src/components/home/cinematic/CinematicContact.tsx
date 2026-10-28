@@ -1,4 +1,3 @@
-import { ArrowUpRight } from "lucide-react";
 import { SectionLabel } from "./SectionLabel";
 import { MagneticAnchor } from "./MagneticAnchor";
 import BlurText from "@/components/blur-text/BlurText";
@@ -53,21 +52,6 @@ export function CinematicContact({ still }: { still: boolean }) {
           >
             Start a conversation
           </MagneticAnchor>
-        </div>
-        <div className="cinema-contact-meta">
-          <a
-            href="https://github.com/Adnank999"
-            target="_blank"
-            rel="noreferrer"
-          >
-            GitHub <ArrowUpRight size={14} aria-hidden="true" />
-          </a>
-          <span className="cinema-micro">
-            Good things start with a conversation.
-          </span>
-          <a href="#spark">
-            Back to the beginning <ArrowUpRight size={14} aria-hidden="true" />
-          </a>
         </div>
       </div>
     </section>

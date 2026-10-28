@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ChevronDown,
@@ -14,10 +14,11 @@ import {
   type DropdownName,
 } from "./navigationData";
 import "@/styles/navbar.css";
-import ElectricLogo from "../global/electric-logo/ElectricLogo";
-import { SiteSearch } from "./site-search/SiteSearch";
+import { BrandLogo } from "../global/brand-logo/BrandLogo";
 import { SignInButton } from "./sign-in-button/SignInButton";
 import { useSmoothScroll } from "./SmoothScrollProvider";
+
+const SiteSearch = lazy(() => import('./site-search/SiteSearch').then(module => ({ default: module.SiteSearch })))
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -160,24 +161,7 @@ export function Navbar() {
               onClick={close}
             >
               <div className="portfolio-nav-brand-logo" aria-hidden="true">
-                <ElectricLogo
-                src="/logo.svg"
-                color="#C21E56"
-                glowColor="#C21E56"
-                scale={0.65}
-                strands={4}
-                bend={0.6}
-                crackle={1.5}
-                arcs={1}
-                speed={2.5}
-                // interactive
-                intensity={0.5}
-                glow={0.5}
-                thickness={0.5}
-                flicker={0.6}
-                fill={0.15}
-                // cursorIntensity={1.45}
-                />
+                <BrandLogo />
               </div>
               <span className="portfolio-nav-brand-copy">
                 <span className="portfolio-nav-brand-name">
@@ -356,7 +340,7 @@ export function Navbar() {
         </AnimatePresence>
       </header>
       <div className="portfolio-nav-desktop-account"><SignInButton /></div>
-      <SiteSearch open={searchOpen} onOpenChange={setSearchOpen} triggerRef={searchTriggerRef} />
+      {searchOpen && <Suspense fallback={<span className="sr-only" role="status">Opening search…</span>}><SiteSearch open onOpenChange={setSearchOpen} triggerRef={searchTriggerRef} /></Suspense>}
     </>
   );
 }
