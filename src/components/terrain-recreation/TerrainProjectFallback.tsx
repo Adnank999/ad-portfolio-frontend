@@ -1,15 +1,16 @@
 import { Link } from '@tanstack/react-router'
-import { projects, type Project } from '../../data/projects'
+import type { Project } from '../../data/projects'
 import { PageLoading } from '../feedback/PageFeedback'
 
 export function TerrainLoadingScreen() {
   return <PageLoading className="terrain-loading" message="Please wait for an immersive experience" />
 }
 
-export function TerrainProjectFallback({ project }: { project?: Project }) {
+export function TerrainProjectFallback({ project, projects = [] }: { project?: Project; projects?: Project[] }) {
   if (!project) return <main className="terrain-fallback">
     <p>SELECTED WORK</p>
     <h1>Projects built to solve real problems.</h1>
+    {!projects.length && <p role="status">No projects have been published yet.</p>}
     <div className="terrain-fallback-grid">
       {projects.map(item => <Link key={item.slug} to="/projects/$slug" params={{ slug: item.slug }} viewTransition={false}>
         <h2>{item.title}</h2><p>{item.description}</p>
@@ -21,7 +22,7 @@ export function TerrainProjectFallback({ project }: { project?: Project }) {
     <p>{project.category} / {project.year}</p>
     <h1>{project.title}</h1>
     <p>{project.description}</p>
-    <img src={project.image} alt={`${project.title} project preview`} width={1600} height={900} />
+    <img src={project.image} alt={project.imageAlt || `${project.title} project preview`} width={1600} height={900} />
     <p>{project.technologies.join(' · ')}</p>
     {[
       ['Overview', project.overview], ['The problem', project.problem], ['The solution', project.solution],

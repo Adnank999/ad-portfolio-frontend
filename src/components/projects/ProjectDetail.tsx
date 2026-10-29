@@ -3,10 +3,9 @@ import { Link } from "@tanstack/react-router";
 import type { Project } from "@/data/projects";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { TechBadge } from "@/components/ui/TechBadge";
-import { projects } from "@/data/projects";
 import { projectTransitionStyle, useProjectTransition } from "@/components/global/project-transition/projectTransition";
 
-export function ProjectDetail({ project }: { project: Project }) {
+export function ProjectDetail({ project, projects = [] }: { project: Project; projects?: Project[] }) {
   const related = projects.filter((p) => p.slug !== project.slug).slice(0, 2);
   const viewTransition = useProjectTransition();
   return (

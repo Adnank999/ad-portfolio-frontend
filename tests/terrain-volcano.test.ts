@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'bun:test'
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import * as THREE from 'three'
-import { terrainProjects } from '../src/components/terrain-recreation/project-data'
+import { toTerrainProjects } from '../src/components/terrain-recreation/project-data'
+import { projects } from '../src/data/projects'
+const terrainProjects = toTerrainProjects(projects)
 import { createBakedHeightSampler, createPortfolioMarkerOrigins, applyBlenderTerrainMaterial } from '../src/components/terrain-recreation/engine/blender-environment.js'
 import { findTerrainCrest } from '../src/components/terrain-recreation/engine/terrain.js'
 import { findDragonBreathTarget, sampleDragonFlight } from '../src/components/terrain-recreation/engine/dragons.js'

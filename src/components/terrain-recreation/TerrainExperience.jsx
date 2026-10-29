@@ -1,8 +1,7 @@
-import React, { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { mountTerrain, DEFAULT_SETTINGS } from './engine/scene.js';
-import { MARKERS } from './engine/atmosphere.js';
 import { PERFORMANCE_PRESET } from './engine/performance.js';
-import { getProject } from '../../data/projects';
+import { toTerrainProjects } from './project-data';
 import { TerrainNavigation } from './TerrainNavigation';
 
 
@@ -91,11 +90,12 @@ const PRESETS={
 };
 const round=(n)=>Number(n).toFixed(2);
 
-export default function TerrainExperience({projectSlug=null,onNavigate,onStateChange}){
+export default function TerrainExperience({projects,project=null,projectSlug=null,onNavigate,onStateChange}){
+  const MARKERS=useMemo(()=>toTerrainProjects(projects),[projects]);
   const host=useRef(null),api=useRef(null);
   const galleryActive=useRef(false);
   const tabBar=useRef(null);
-  const route=useRef({projectSlug,onNavigate,onStateChange});
+  const route=useRef({projectSlug,project,onNavigate,onStateChange});
   const [ready,setReady]=useState(false);
   const [audio,setAudio]=useState({enabled:true,status:'blocked'});
   const [settings,setSettings]=useState({...DEFAULT_SETTINGS});
@@ -103,13 +103,12 @@ export default function TerrainExperience({projectSlug=null,onNavigate,onStateCh
   const [controlsOpen,setControlsOpen]=useState(false);
   const [tab,setTab]=useState(projectSlug?'BACKGROUND':'WEATHER');
   const [topdown,setTopdown]=useState(false),[auto,setAuto]=useState(true);
-  const project=getProject(projectSlug||'');
   const onGalleryActive=useCallback(active=>{galleryActive.current=active;api.current?.setGalleryActive(active);},[]);
   const onLauncherLayout=useCallback(layout=>api.current?.setGalleryLauncher(layout),[]);
   useEffect(()=>{
-    route.current={projectSlug,onNavigate,onStateChange};
-    api.current?.syncRoute(projectSlug);
-  },[projectSlug,onNavigate,onStateChange]);
+    route.current={projectSlug,project,onNavigate,onStateChange};
+    api.current?.syncRoute(projectSlug,project);
+  },[projectSlug,project,onNavigate,onStateChange]);
   useEffect(()=>{
     setControlsOpen(false);
     setTab(projectSlug?'BACKGROUND':'WEATHER');
@@ -122,8 +121,9 @@ export default function TerrainExperience({projectSlug=null,onNavigate,onStateCh
   useEffect(()=>{
     let cancelled=false,handle;
     const controller=new AbortController();
+    setReady(false);route.current.onStateChange('loading');
     mountTerrain(host.current,{
-      settings:DEFAULT_SETTINGS,signal:controller.signal,
+      settings:DEFAULT_SETTINGS,signal:controller.signal,projects:MARKERS,
       projectSlug:route.current.projectSlug,
       onAudioState:state=>{if(!cancelled)setAudio(state);},
       onNavigate:slug=>route.current.onNavigate(slug),
@@ -132,10 +132,10 @@ export default function TerrainExperience({projectSlug=null,onNavigate,onStateCh
       onPerformance:stats=>{if(!cancelled)setPerformance(stats);}
     }).then(scene=>{
       if(cancelled)scene.destroy();
-      else {handle=scene;api.current=scene;scene.syncRoute(route.current.projectSlug);setReady(true);route.current.onStateChange('ready');}
+      else {handle=scene;api.current=scene;scene.syncRoute(route.current.projectSlug,route.current.project);setReady(true);route.current.onStateChange('ready');}
     }).catch(err=>{if(!cancelled&&err.name!=='AbortError'){console.error('[storm terrain]',err);route.current.onStateChange('error');}});
     return ()=>{cancelled=true;controller.abort();handle?.destroy();api.current=null;};
-  },[]);
+  },[MARKERS]);
   const set=(key,value)=>{const parsed=typeof DEFAULT_SETTINGS[key]==='boolean'?Boolean(value):Number(value);
     setSettings(s=>({...s,[key]:parsed}));api.current?.setSetting(key,parsed);};
   const preset=(name)=>{
@@ -157,17 +157,17 @@ export default function TerrainExperience({projectSlug=null,onNavigate,onStateCh
       if(api.current?.getShowcaseState().active)return;
       if(event.target?.tagName==='BUTTON')return;
       if(key==='l')api.current?.flash();
-      if(key==='1')api.current?.selectPortal(MARKERS[0].id);
-      if(key==='2')api.current?.selectPortal(MARKERS[1].id);
-      if(key==='3')api.current?.selectPortal(MARKERS[2].id);
-      if(key==='4')api.current?.selectPortal(MARKERS[3].id);
+      if(key==='1'&&MARKERS[0])api.current?.selectPortal(MARKERS[0].id);
+      if(key==='2'&&MARKERS[1])api.current?.selectPortal(MARKERS[1].id);
+      if(key==='3'&&MARKERS[2])api.current?.selectPortal(MARKERS[2].id);
+      if(key==='4'&&MARKERS[3])api.current?.selectPortal(MARKERS[3].id);
       if(key==='5'&&MARKERS[4])api.current?.selectPortal(MARKERS[4].id);
       if(key==='6'&&MARKERS[5])api.current?.selectPortal(MARKERS[5].id);
       if(key==='r')set('rippleEnabled',!settings.rippleEnabled);
       if(key==='b')api.current?.breathe('both');
     };window.addEventListener('keydown',keyboard);
     return ()=>window.removeEventListener('keydown',keyboard);
-  },[settings.rippleEnabled]);
+  },[settings.rippleEnabled,MARKERS]);
 
   return <main className="terrain-experience" style={{'--ui-shade':settings.uiShade}}>
     <div className="stage" ref={host} />
@@ -177,7 +177,7 @@ export default function TerrainExperience({projectSlug=null,onNavigate,onStateCh
       <p className="eyebrow">DESIGN &amp; DEVELOPMENT / SELECTED WORK</p>
       <h1>Crafting<br/>experiences<br/>worth remembering.</h1>
       <p className="description">From first idea to final detail, I build thoughtful digital products with lasting impact.</p>
-      <button className="hero-cta" disabled={!ready} onClick={()=>api.current?.selectPortal(MARKERS[0].id)}>
+      <button className="hero-cta" disabled={!ready||!MARKERS.length} onClick={()=>MARKERS[0]&&api.current?.selectPortal(MARKERS[0].id)}>
         ENTER THE WORLD <span>↗</span>
       </button>
     </section>

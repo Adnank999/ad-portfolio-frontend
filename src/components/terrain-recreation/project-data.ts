@@ -1,4 +1,4 @@
-import { projects } from '../../data/projects'
+import type { Project } from '../../data/projects'
 
 const anchors = [
   { x: -68, z: 3, color: '#ff4ccc' },
@@ -9,9 +9,10 @@ const anchors = [
   { x: 78, z: 48, color: '#8ce88c' },
 ]
 
-export const terrainProjects = projects.map((project, index) => ({
+export const toTerrainProject = (project: Project, index = 0) => ({
   ...project,
   ...anchors[index % anchors.length],
+  x: anchors[index % anchors.length].x + Math.floor(index / anchors.length) * 12,
   id: project.slug,
   client: project.category,
   imageUrl: project.image,
@@ -23,19 +24,22 @@ export const terrainProjects = projects.map((project, index) => ({
     ['Challenges', project.challenges],
     ['Results', project.results],
   ] as [string, string][],
-}))
+})
+
+export type TerrainProject = ReturnType<typeof toTerrainProject>
+export const toTerrainProjects = (projects: Project[]): TerrainProject[] => projects.map(toTerrainProject)
 
 export function terrainProjectPath(slug: string | null, base = '/') {
   const prefix = `/${base.split('/').filter(Boolean).join('/')}`.replace(/\/$/, '')
   return `${prefix}/projects${slug ? `/${encodeURIComponent(slug)}` : ''}`
 }
 
-export function terrainProjectFromPath(pathname: string, base = '/') {
+export function terrainProjectFromPath(pathname: string, projects: TerrainProject[], base = '/') {
   const prefix = `${terrainProjectPath(null, base)}/`
   if (!pathname.startsWith(prefix)) return null
   try {
     const slug = decodeURIComponent(pathname.slice(prefix.length).replace(/\/$/, ''))
-    return terrainProjects.find(project => project.id === slug) ?? null
+    return projects.find(project => project.id === slug) ?? null
   } catch {
     return null
   }

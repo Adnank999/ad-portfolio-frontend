@@ -1,7 +1,13 @@
-import { projects } from "@/data/projects";
+import { useQuery } from '@tanstack/react-query';
+import { projectsOptions } from '@/queries/projects/projects';
+import { PageLoading, PageLoadError } from '@/components/feedback/PageFeedback';
 import { ProjectCard } from "@/components/projects/ProjectCard";
 
 export function Projects() {
+  const query = useQuery(projectsOptions());
+  if (query.isPending) return <PageLoading message="Loading published projects…" />;
+  if (query.isError) return <PageLoadError onRetry={() => query.refetch()} />;
+  const projects = query.data;
   return (
     <main id="work" className="pt-32 pb-24 sm:pb-32">
       <div className="mx-auto max-w-6xl px-5 sm:px-6">
@@ -12,6 +18,7 @@ export function Projects() {
         </header>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2">
+          {!projects.length && <p role="status">No projects have been published yet.</p>}
           {projects.map((project) => (
             <ProjectCard
               key={project.id}

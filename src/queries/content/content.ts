@@ -4,6 +4,7 @@ import type { ContentKind, ContentListInput, ContentWrite } from '@/server/portf
 import { blogKeys } from '@/queries/blog/blog'
 import { caseStudyKeys } from '@/queries/case-studies/case-studies'
 import { serviceKeys } from '@/queries/services/services'
+import { projectKeys } from '@/queries/projects/projects'
 
 export const contentKeys = {
   all: (kind: ContentKind) => ['admin-content', kind] as const,
@@ -34,6 +35,7 @@ export function useCreateContent(kind: ContentKind) {
       if (kind === 'blogs') await queryClient.invalidateQueries({ queryKey: blogKeys.all })
       if (kind === 'case-studies') await queryClient.invalidateQueries({ queryKey: caseStudyKeys.all })
       if (kind === 'services') await queryClient.invalidateQueries({ queryKey: serviceKeys.all })
+      if (kind === 'projects') await queryClient.invalidateQueries({ queryKey: projectKeys.all })
     },
   })
 }
@@ -48,6 +50,7 @@ export function useUpdateContent(kind: ContentKind, id: string) {
       if (kind === 'blogs') await queryClient.invalidateQueries({ queryKey: blogKeys.all })
       if (kind === 'case-studies') await queryClient.invalidateQueries({ queryKey: caseStudyKeys.all })
       if (kind === 'services') await queryClient.invalidateQueries({ queryKey: serviceKeys.all })
+      if (kind === 'projects') await queryClient.invalidateQueries({ queryKey: projectKeys.all })
     },
   })
 }
@@ -61,6 +64,7 @@ export function useDeleteContent(kind: ContentKind) {
       if (kind === 'blogs') await queryClient.invalidateQueries({ queryKey: blogKeys.all })
       if (kind === 'case-studies') await queryClient.invalidateQueries({ queryKey: caseStudyKeys.all })
       if (kind === 'services') await queryClient.invalidateQueries({ queryKey: serviceKeys.all })
+      if (kind === 'projects') await queryClient.invalidateQueries({ queryKey: projectKeys.all })
     },
   })
 }

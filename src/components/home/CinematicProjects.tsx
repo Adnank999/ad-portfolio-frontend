@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react'
-import { projects, type Project } from '@/data/projects'
+import type { Project } from '@/data/projects'
+import { useQuery } from '@tanstack/react-query'
+import { projectsOptions } from '@/queries/projects/projects'
 import { useSectionProgress } from './hooks/useCinematicMotion'
 import { SectionLabel } from './cinematic/SectionLabel'
 import { useSmoothScroll } from '@/components/layout/SmoothScrollProvider'
 
-const selectedProjects = [projects[0], projects[1], projects[2], projects[3]]
 
 function CinematicProjectCard({ project, index, still, onFocus }: { project: Project; index: number; still: boolean; onFocus: () => void }) {
   const cardRef = useRef<HTMLElement>(null)
@@ -35,6 +36,8 @@ function CinematicProjectCard({ project, index, still, onFocus }: { project: Pro
 }
 
 export function CinematicProjects({ compact, still }: { compact: boolean; still: boolean }) {
+  const projects = useQuery(projectsOptions())
+  const selectedProjects = projects.isError ? [] : (projects.data ?? []).slice(0, 4)
   const sectionRef = useRef<HTMLElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
@@ -52,11 +55,11 @@ export function CinematicProjects({ compact, still }: { compact: boolean; still:
     observer.observe(track)
     measure()
     return () => observer.disconnect()
-  }, [distance, compact, still])
+  }, [distance, compact, still, selectedProjects.length])
   const move = (direction: number) => {
     const section = sectionRef.current
     if (!section) return
-    const next = Math.max(0, Math.min(1, progress.get() + direction / (selectedProjects.length - 1)))
+    const next = Math.max(0, Math.min(1, progress.get() + direction / Math.max(1, selectedProjects.length - 1)))
     const target = section.getBoundingClientRect().top + window.scrollY + next * (section.offsetHeight - window.innerHeight)
     if (lenis.current) lenis.current.scrollTo(target)
     else window.scrollTo({ top: target, behavior: 'instant' })
@@ -72,7 +75,8 @@ export function CinematicProjects({ compact, still }: { compact: boolean; still:
     else window.scrollTo({ top: target, behavior: 'instant' })
     if (viewportRef.current) viewportRef.current.scrollLeft = 0
   }
-  return <section ref={sectionRef} id="creations" className="cinema-section cinema-light cinema-work" aria-labelledby="work-title"><div className="cinema-sticky cinema-work-sticky"><div className="cinema-wrap cinema-work-heading"><div><SectionLabel number="03">Selected work / 2025–2026</SectionLabel><h2 id="work-title">Ideas out in the world.</h2></div><Link to="/projects" className="cinema-link"><span className="accent-text">All projects </span><ArrowUpRight size={20} aria-hidden="true" /></Link></div>
+  if (!selectedProjects.length) return null
+  return <section ref={sectionRef} id="creations" className="cinema-section cinema-light cinema-work" aria-labelledby="work-title"><div className="cinema-sticky cinema-work-sticky"><div className="cinema-wrap cinema-work-heading"><div><SectionLabel number="03">Selected work</SectionLabel><h2 id="work-title">Ideas out in the world.</h2></div><Link to="/projects" className="cinema-link"><span className="accent-text">All projects </span><ArrowUpRight size={20} aria-hidden="true" /></Link></div>
     <div ref={viewportRef} className="cinema-project-viewport"><motion.div ref={trackRef} className="cinema-project-track" style={compact || still ? undefined : { x }}>{selectedProjects.map((project, index) => <CinematicProjectCard key={project.id} project={project} index={index} still={still} onFocus={() => revealFocusedProject(index)} />)}</motion.div></div>
     <div className="cinema-wrap cinema-work-bottom"><span className="cinema-micro">Thoughtful design. Solid foundations. Real possibilities.</span>{!compact && !still && <div className="cinema-work-controls"><button type="button" aria-label="Previous project" onClick={() => move(-1)}><ArrowLeft size={20} /></button><button type="button" aria-label="Next project" onClick={() => move(1)}><ArrowRight size={20} /></button></div>}</div>
   </div></section>

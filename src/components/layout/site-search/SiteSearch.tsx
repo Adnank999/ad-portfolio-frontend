@@ -3,6 +3,8 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { Link } from '@tanstack/react-router'
 import { ArrowUpRight, Search, X } from 'lucide-react'
 import { getSearchResults } from './search-data'
+import { useQuery } from '@tanstack/react-query'
+import { projectsOptions } from '@/queries/projects/projects'
 import './site-search.css'
 
 type SiteSearchProps = {
@@ -14,7 +16,8 @@ type SiteSearchProps = {
 export function SiteSearch({ open, onOpenChange, triggerRef }: SiteSearchProps) {
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
-  const results = getSearchResults(query)
+  const projects = useQuery({ ...projectsOptions(), enabled: open })
+  const results = getSearchResults(query, projects.isError ? [] : projects.data ?? [])
 
   return <Dialog.Root open={open} onOpenChange={onOpenChange}>
     <Dialog.Portal>
@@ -32,6 +35,7 @@ export function SiteSearch({ open, onOpenChange, triggerRef }: SiteSearchProps) 
           <input ref={inputRef} type="search" aria-label="Search pages and projects" placeholder="What are you looking for?" autoComplete="off" spellCheck={false} value={query} onChange={event => setQuery(event.target.value)} />
         </div>
         <p role="status" aria-live="polite" className="site-search-count">{query.trim() ? `${results.length} ${results.length === 1 ? 'match' : 'matches'}` : 'Explore the portfolio'}</p>
+        {projects.isError && <p className="site-search-empty">Projects could not be loaded. <button type="button" onClick={() => void projects.refetch()}>Try again</button></p>}
         <ul className="site-search-results">
           {results.map(item => <li key={item.href}><Link to={item.href} onClick={() => onOpenChange(false)}><span><span className="accent-text">{item.label}</span><small>{item.description}</small></span><ArrowUpRight size={18} aria-hidden="true" /></Link></li>)}
         </ul>

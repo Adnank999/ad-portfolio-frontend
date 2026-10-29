@@ -3,7 +3,7 @@ import { getMobileCameraScale } from './mobile-showcase.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { createAtmosphere, MARKERS } from './atmosphere.js';
+import { createAtmosphere } from './atmosphere.js';
 import { makeFilmPass } from './postfx.js';
 import { createPointerFluid } from './fluid.js';
 import { createRiverMask, createRiverWater, WATER_LEVEL } from './water.js';
@@ -105,6 +105,7 @@ function makeShoreGlints(heightAt,riverMask){
 
 /** Build original height-based terrain then extend with cohesive storm lighting. */
 export async function mountTerrain(host,opts={}){
+  const MARKERS=opts.projects??[];
   if(!host)throw new Error('Missing host element');
   const status=msg=>opts.onStatus?.(msg);
   const settings={...DEFAULT_SETTINGS,...opts.settings};
@@ -333,7 +334,7 @@ export async function mountTerrain(host,opts={}){
     opts.signal?.throwIfAborted();
     water.setReflectionExclusions([dragons.group,...dragons.dragons.map(dragon=>dragon.effect.group)]);
     status('Building thunderstorm, reactive energy beacons and project image shader...');
-    atmosphere=await createAtmosphere({scene,camera,renderer,host,imageBase:ASSET,heightAt,riverMask,
+    atmosphere=await createAtmosphere({scene,camera,renderer,host,imageBase:ASSET,heightAt,riverMask,markers:MARKERS,
       markerOrigins:blenderEnvironment?createPortfolioMarkerOrigins(MARKERS,heightAt):undefined,
       onThunder:event=>{void audio.strike(event);},
       onPortalOpen:project=>{void audio.playPortal(project);},onPortalClose:()=>audio.stopPortal(),
@@ -365,7 +366,7 @@ export async function mountTerrain(host,opts={}){
       beforeCapture:time=>water.update(time,0,settings,scene.fog,projectDirection)
     });
     composer.addPass(projectBackground);
-    projectPage=createProjectPage({host,pass:showcasePass,imageBase:ASSET,base:import.meta.env?.BASE_URL||'/',reducedMotion,onNavigate:opts.onNavigate,
+    projectPage=createProjectPage({host,pass:showcasePass,projects:MARKERS,imageBase:ASSET,base:import.meta.env?.BASE_URL||'/',reducedMotion,onNavigate:opts.onNavigate,
       noise:atmosphere.getProjectNoise(),getArtwork:id=>atmosphere.getProjectArtwork(id),
       onProject:id=>{if(atmosphere.getSelectedProject()!==id)atmosphere.select(id,{silent:true});},
       onActive:value=>{atmosphere.setShowcaseActive(value);audio.setDetailMode(value);if(value)dragging=false;},
@@ -474,7 +475,7 @@ export async function mountTerrain(host,opts={}){
     return {
       destroy:dispose,
       setAudioEnabled:value=>audio.setEnabled(value),getAudioState:()=>audio.getState(),
-      syncRoute:id=>{projectPage.syncRoute(id);if(!id)atmosphere.close();},
+      syncRoute:(id,project)=>{projectPage.syncRoute(id,project);if(!id)atmosphere.close();},
       setGalleryLauncher:layout=>galleryLauncher.setLayout(layout),
       setGalleryActive(value){
         const active=Boolean(value);if(destroyed||galleryActive===active)return;

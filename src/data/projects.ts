@@ -14,6 +14,7 @@ export type Project = {
   title: string
   description: string
   image: string
+  imageAlt?: string
   media?: ProjectMedia[]
   category: string
   year: string
@@ -30,6 +31,7 @@ export type Project = {
   results: string
 }
 
+// Legacy case-study seeds and test fixtures. Public project views load the Rust API.
 export const projects: Project[] = [
   {
     id: '1', slug: 'hotel-booking-platform', title: 'Hotel Booking Platform', category: 'Travel / SaaS', year: '2026',

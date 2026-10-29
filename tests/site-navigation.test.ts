@@ -16,9 +16,10 @@ describe('site navigation and global accent', () => {
   test('search trims queries, ignores case and includes project names and descriptions', () => {
     expect(getSearchResults('  ABOUT  ')).toEqual(getSearchResults('about'))
     expect(getSearchResults('story behind the code').some(item => item.href === '/about')).toBe(true)
-    for (const project of projects) expect(getSearchResults(project.title).some(item => item.href === `/projects/${project.slug}`)).toBe(true)
+    for (const project of projects) expect(getSearchResults(project.title, projects).some(item => item.href === `/projects/${project.slug}`)).toBe(true)
     expect(getSearchResults('not-a-real-page-987654')).toEqual([])
-    expect(getSearchResults('  ')).toHaveLength(projects.length + 6)
+    expect(getSearchResults('  ', projects)).toHaveLength(projects.length + 6)
+    expect(getSearchResults('  ')).toHaveLength(6)
   })
 
   test('keeps Method and Tools hidden and account actions beside the contact action', () => {

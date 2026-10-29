@@ -2,7 +2,7 @@ import { ArrowRight, ArrowUpRight, BookOpen, Code2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import type { ServiceSummary } from '@/lib/services/services';
 import { ServiceMedia } from '../service-media/ServiceMedia';
-import { projects } from "@/data/projects";
+import type { Project } from "@/data/projects";
 import { ServiceArtwork } from "./ServiceArtwork";
 import { ServiceAccordion, ServiceComparison, ServiceContactLink, ServiceGrid, ServiceSection, ServiceSpotlight } from "./ServiceSections";
 import type { ServiceContent } from "./servicePage.types";
@@ -11,7 +11,7 @@ import './service-page.css';
 
 const phases = ["Discover", "Diagnose", "Design", "Deliver", "Evolve"];
 
-export function ServicePage({ content, services = [] }: { content: ServiceContent; services?: ServiceSummary[] }) {
+export function ServicePage({ content, services = [], projects = [] }: { content: ServiceContent; services?: ServiceSummary[]; projects?: Project[] }) {
   const related = services.filter((service) => service.enabled && content.related.includes(service.slug)).map(service => ({ slug: service.slug, name: service.navTitle, description: service.navDescription }));
   const media = (slot: string) => content.media?.find(media => media.slot === slot);
   const work = projects.filter((project) => content.projectSlugs?.includes(project.slug));

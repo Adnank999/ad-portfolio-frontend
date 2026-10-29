@@ -1,5 +1,13 @@
 # Terrain project experience
 
+## Published project data
+
+Public project pages now use the Rust API's `/api/v1/projects` archive and `/api/v1/projects/:slug` detail endpoints through TanStack Start server functions. Only database projects that are published, due and not deleted appear. There is no seeded-project fallback when the API is empty, unavailable or returns 404. The existing private `PORTFOLIO_API_URL` must point to the running backend.
+
+The archive is paginated and cached under `public-projects`. Create, update, publication, unpublication and delete mutations invalidate that namespace. Project routes fetch fresh queries on entry; active queries also refresh on window focus. The detail endpoint supplies saved narrative fields, cover alt text, gallery media and SEO. Search and service-related project links use the same public archive. The optional homepage work section uses it when mounted; no new homepage section is introduced.
+
+`toTerrainProjects()` and `createProjectCatalog()` are pure adapters over supplied records. Every scene owns its catalogue and portals; no mutable shared project list or demo beacons are used. Router commits hydrate full project details into the existing scene without rebuilding it on every detail navigation. Changes to the archive rebuild the scene. Empty archives render an explicit empty state without loading Three.js; one-project archives avoid missing-marker shortcuts and hide a self-referencing next-project link. Legacy `src/data/projects.ts` values remain only as editorial seed/fixture data for case studies and tests; public project views do not import them as runtime records.
+
 ## Mobile showcase
 
 At widths up to 760px the introduction sits at the bottom, keeping the center clear. The description is omitted on mobile and the heading is smaller. Camera distance scales with the viewport aspect ratio (up to 1.5×), including selected-project framing, without changing desktop camera settings. Mobile-only Previous/Next arrow buttons appear below a selected portal, cycle through every project with wraparound, and disappear in the full project-details view. They reuse the existing portal selection and transition pipeline.
@@ -62,7 +70,7 @@ Additional media defaults to `layout: 'large'`: clean HTML images or videos up t
 
 The right-center gallery icon is drawn by `engine/gallery-launcher.js` on the existing renderer, not a second canvas. Its native button opens `gallery/ProjectGallery.tsx`, an accessible Radix dialog with full-width image/video viewing, keyboard navigation, touch swipe, captions and lazy thumbnails. Only the active video is mounted, and adjacent images preload only while the gallery is open. Terrain rendering and scene audio pause behind the gallery and resume on close. Escape closes the gallery without navigating away from the project.
 
-Add real image/video entries to a project's optional `media` array in `src/data/projects.ts`:
+Published project cover and gallery images are managed in the admin Projects form. Their database `gallery` entries become image `media` records for the 3D view and full-screen gallery. The renderer's optional media contract also supports the following shapes when supplied by another verified data source:
 
 ```ts
 media: [

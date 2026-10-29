@@ -1,4 +1,4 @@
-import { getProject, getNextProject, projectPath, projectFromPath, normalizeBase } from './projects.js';
+import { createProjectCatalog, projectPath, normalizeBase } from './projects.js';
 import { getProjectMedia } from '../gallery/project-media';
 
 export function getImageScrollReveal(rectangle, height, reducedMotion = false) {
@@ -9,8 +9,10 @@ export function getImageScrollReveal(rectangle, height, reducedMotion = false) {
   return Math.min(entering, leaving);
 }
 
-export function createProjectPage({ host, pass, getArtwork, noise, imageBase, base = '/', reducedMotion = false,
+export function createProjectPage({ host, pass, getArtwork, noise, imageBase, projects = [], base = '/', reducedMotion = false,
   onProject = () => {}, onActive = () => {}, onImageHover = () => {}, onNavigate = null, eventTarget = window, documentTarget = document }) {
+  const catalog = createProjectCatalog(projects);
+  const { getProject, getNextProject, projectFromPath } = catalog;
   const root = documentTarget.createElement('article');
   root.className = 'showcase-page'; root.hidden = true; root.tabIndex = -1;
   root.setAttribute('aria-label', 'Project showcase');
@@ -148,6 +150,7 @@ export function createProjectPage({ host, pass, getArtwork, noise, imageBase, ba
       caption.append(label, text); figure.append(frame, caption); root.querySelector('.case-media-list').append(figure);
     }
     const nextLink = root.querySelector('.case-next'); nextLink.href = projectPath(next.id, base);
+    nextLink.hidden = next.id === project.id;
     nextLink.setAttribute('aria-label', `Next project: ${next.title}`);
     nextLink.querySelector('.case-next-title').textContent = next.title;
     hero = root.querySelector('.case-art'); nextArt = root.querySelector('.case-next-art');
@@ -271,7 +274,7 @@ export function createProjectPage({ host, pass, getArtwork, noise, imageBase, ba
   return {
     open, overview, resize: measure,
     setModalActive(value) { root.inert = Boolean(value); if (value) pauseVideos(); },
-    syncRoute(id) { if (id) open(id, { historyMode: 'none' }); else close(); },
+    syncRoute(id, project) { if (project) { catalog.updateProject(project); if (current?.id === id) current = null; } if (id) open(id, { historyMode: 'none' }); else close(); },
     restore() { const project = projectFromPath(eventTarget.location.pathname, base); if (project) open(project.id, { historyMode: 'none' }); },
     update(state) {
       if (lastAmount !== state.amount) {

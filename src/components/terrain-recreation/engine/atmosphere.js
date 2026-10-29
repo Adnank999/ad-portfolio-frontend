@@ -4,12 +4,10 @@ import { makeEnergyBeam, makeEnergySpiral, makePortalStorm, chargeEnvelope, CHAR
 import { WATER_LEVEL } from './water.js';
 import { findTerrainCrest } from './terrain.js';
 import { createStormSky } from './storm-sky.js';
-import { PROJECTS } from './projects.js';
 import { configureSurfaceTexture } from './texture-quality.js';
 
 // The geometry is intentionally owned by scene.js. This module only adds
 // weather, energy markers, responsive hotspots, and shader-based project art.
-export const MARKERS = PROJECTS;
 const clamp = THREE.MathUtils.clamp;
 const lerp = THREE.MathUtils.lerp;
 const ease = (a, b, t) => (a + (b - a) * Math.min(1, Math.max(0, t)));
@@ -217,7 +215,7 @@ function makePosterDOM(host) {
     destroy(){caption.remove();},
   };
 }
-export async function createAtmosphere({scene,camera,renderer,host,heightAt,riverMask,imageBase,onStatus,onThunder,markerOrigins={},
+export async function createAtmosphere({scene,camera,renderer,host,heightAt,riverMask,imageBase,onStatus,onThunder,markerOrigins={},markers:MARKERS=[],
   onPortalOpen,onPortalClose,onViewProject,isShowcasing=()=>false,onRiver,onFlame,onStorm}) {
   const loader=new THREE.TextureLoader();
   const [noise,panorama,fallback]=await Promise.all([

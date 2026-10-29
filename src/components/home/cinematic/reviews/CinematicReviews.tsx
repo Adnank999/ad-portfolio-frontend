@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { motion, useAnimationFrame, useInView, useMotionValue, useTransform } from "framer-motion";
 import { ArrowLeft, ArrowRight, Pause, Play } from "lucide-react";
-import { projects } from "@/data/projects";
 import { ReviewCard } from "./ReviewCard";
 import './review-proof.css';
 import { sampleReviews, toolkit, type Review } from "./reviews";

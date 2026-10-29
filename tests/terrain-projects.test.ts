@@ -1,11 +1,12 @@
 import { describe, expect, mock, test } from 'bun:test'
 import { projects } from '../src/data/projects'
-import { terrainProjects, terrainProjectPath, terrainProjectFromPath } from '../src/components/terrain-recreation/project-data'
+import { toTerrainProjects, terrainProjectPath, terrainProjectFromPath } from '../src/components/terrain-recreation/project-data'
 import { createProjectPage, getImageScrollReveal } from '../src/components/terrain-recreation/engine/project-page.js'
 import { ProjectShowcasePass } from '../src/components/terrain-recreation/engine/project-showcase.js'
 import { PROJECT_ARTWORK_DEFAULTS, PROJECT_ARTWORK_GLSL } from '../src/components/terrain-recreation/engine/project-artwork.js'
 import { readFileSync } from 'node:fs'
 import postcss from 'postcss'
+const terrainProjects = toTerrainProjects(projects)
 
 describe('terrain project integration', () => {
   test('composites source-color artwork after the background-only output grade', () => {
@@ -77,14 +78,14 @@ describe('terrain project integration', () => {
       expect(terrain.features).toEqual(project.features)
       expect(terrain.summary).toBe(project.overview)
       expect(terrainProjectPath(terrain.id)).toBe(`/projects/${project.slug}`)
-      expect(terrainProjectFromPath(`/projects/${project.slug}/`)).toBe(terrain)
-      expect(terrainProjectFromPath(`/portfolio/projects/${project.slug}`, '/portfolio/')).toBe(terrain)
+      expect(terrainProjectFromPath(`/projects/${project.slug}/`, terrainProjects)).toBe(terrain)
+      expect(terrainProjectFromPath(`/portfolio/projects/${project.slug}`, terrainProjects, '/portfolio/')).toBe(terrain)
     }
     expect(terrainProjectPath(null)).toBe('/projects')
-    expect(terrainProjectFromPath('/projects/unknown')).toBeNull()
-    expect(terrainProjectFromPath('/projects/%E0%A4%A')).toBeNull()
-    expect(terrainProjectFromPath('/projects/hotel-booking-platform/extra')).toBeNull()
-    expect(terrainProjectFromPath('/admin/projects/hotel-booking-platform')).toBeNull()
+    expect(terrainProjectFromPath('/projects/unknown', terrainProjects)).toBeNull()
+    expect(terrainProjectFromPath('/projects/%E0%A4%A', terrainProjects)).toBeNull()
+    expect(terrainProjectFromPath('/projects/hotel-booking-platform/extra', terrainProjects)).toBeNull()
+    expect(terrainProjectFromPath('/admin/projects/hotel-booking-platform', terrainProjects)).toBeNull()
   })
 
   test('lets TanStack own navigation, history and SEO while reusing one showcase', () => {
@@ -107,7 +108,7 @@ describe('terrain project integration', () => {
       revealImage: mock(() => {}), hoverImage: mock(() => {}), pointer: { set: mock(() => {}) },
       setImageVisibility: mock(() => {}), setMediaLayout: mock(() => {}), setMediaImage: mock(() => {}),
     }
-    const page = createProjectPage({ host, pass, getArtwork: () => ({ image: artwork }), noise: {},
+    const page = createProjectPage({ host, pass, projects: terrainProjects, getArtwork: () => ({ image: artwork }), noise: {},
       imageBase: '/terrain/assets/', reducedMotion: true, onNavigate: navigate, onActive })
     expect(window.history.state).toBe(historyState)
     const first = terrainProjects[0], second = terrainProjects[1]

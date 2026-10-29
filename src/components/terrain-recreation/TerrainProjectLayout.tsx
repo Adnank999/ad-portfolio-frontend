@@ -1,7 +1,7 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
-import { ClientOnly, Link, Outlet, useMatches, useNavigate } from '@tanstack/react-router'
-import { getProject } from '../../data/projects'
-import { terrainProjectFromPath } from './project-data'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { ClientOnly, Link, Outlet, useMatch, useMatches, useNavigate } from '@tanstack/react-router'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
+import { projectOptions, projectsOptions } from '@/queries/projects/projects'
 import { TerrainLoadingScreen } from './TerrainProjectFallback'
 import './terrain.css'
 
@@ -10,12 +10,16 @@ const TerrainExperience = lazy(() => import('./TerrainExperience'))
 export function TerrainProjectLayout() {
   const pathname = useMatches({ select: matches => matches.at(-1)?.pathname ?? '/' })
   const navigate = useNavigate()
+  const { data: published } = useSuspenseQuery(projectsOptions())
+  const match = useMatch({ from: '/projects/$slug', shouldThrow: false })
+  const detail = useQuery({ ...projectOptions(match?.params.slug ?? ''), enabled: Boolean(match) })
+  const project = detail.isError ? null : detail.data?.project ?? null
+  const projects = useMemo(() => project && !published.some(item => item.slug === project.slug) ? [...published, project] : published, [published, project])
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading')
   const [hydrated, setHydrated] = useState(false)
   useEffect(() => { setHydrated(true) }, [])
-  const project = terrainProjectFromPath(pathname, import.meta.env.BASE_URL)
   const overview = pathname.replace(/\/$/, '') === `${import.meta.env.BASE_URL}projects`.replace(/\/$/, '')
-  const validRoute = overview || Boolean(project && getProject(project.id))
+  const validRoute = overview ? projects.length > 0 : Boolean(project)
   const inProjectRoute = overview || pathname.startsWith(`${import.meta.env.BASE_URL}projects/`)
   const onNavigate = useCallback((slug: string | null) => {
     if (slug) void navigate({ to: '/projects/$slug', params: { slug }, viewTransition: false })
@@ -27,7 +31,7 @@ export function TerrainProjectLayout() {
   return <div className="terrain-route" data-terrain-state={validRoute ? state : 'error'}>
     {validRoute && <ClientOnly>
       <Suspense fallback={null}>
-        <TerrainExperience projectSlug={project?.id ?? null} onNavigate={onNavigate} onStateChange={setState} />
+        <TerrainExperience projects={projects} project={project} projectSlug={project?.slug ?? null} onNavigate={onNavigate} onStateChange={setState} />
       </Suspense>
     </ClientOnly>}
     {validRoute && state === 'loading' && <TerrainLoadingScreen />}
