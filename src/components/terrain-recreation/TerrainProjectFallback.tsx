@@ -22,7 +22,7 @@ export function TerrainProjectFallback({ project, projects = [] }: { project?: P
     <p>{project.category} / {project.year}</p>
     <h1>{project.title}</h1>
     <p>{project.description}</p>
-    <img src={project.image} alt={project.imageAlt || `${project.title} project preview`} width={1600} height={900} />
+    <img src={project.featuredImageUrl || project.image} alt={project.featuredImageAlt || project.imageAlt || `${project.title} project preview`} width={1600} height={900} />
     <p>{project.technologies.join(' · ')}</p>
     {[
       ['Overview', project.overview], ['The problem', project.problem], ['The solution', project.solution],

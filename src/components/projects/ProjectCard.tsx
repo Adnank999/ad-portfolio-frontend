@@ -32,7 +32,7 @@ export function ProjectCard({ project, featured = false }: ProjectCardProps) {
             style={projectTransitionStyle(project.slug, "image")}
           >
             <img
-              src={project.image}
+              src={project.thumbnailUrl || project.image}
               alt={`${project.title} preview`}
               width={1600}
               height={featured ? 800 : 1000}

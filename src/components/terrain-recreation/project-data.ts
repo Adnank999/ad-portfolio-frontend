@@ -15,7 +15,9 @@ export const toTerrainProject = (project: Project, index = 0) => ({
   x: anchors[index % anchors.length].x + Math.floor(index / anchors.length) * 12,
   id: project.slug,
   client: project.category,
-  imageUrl: project.image,
+  imageUrl: project.thumbnailUrl || project.image,
+  heroImageUrl: project.featuredImageUrl || project.image,
+  heroImageAlt: project.featuredImageAlt || project.imageAlt || `${project.title} project preview`,
   summary: project.overview,
   services: [
     ['The problem', project.problem],

@@ -8,6 +8,7 @@ const shaders = process.argv.includes('--shaders')
 const loader = process.argv.includes('--loader')
 const installedShaders = process.argv.includes('--installed-shaders')
 const projectArtwork = process.argv.includes('--project-artwork')
+const projectCors = process.argv.includes('--project-cors')
 const homeShader = process.argv.includes('--home-shader')
 const brandLogo = process.argv.includes('--brand-logo')
 const graphics = shaders || installedShaders || projectArtwork || homeShader || brandLogo
@@ -34,12 +35,18 @@ const homeAssets = {
     build.onLoad({ filter: /.*/, namespace: 'home-shader-asset' }, args => ({ contents: `export default ${JSON.stringify('/home-shader-assets/' + args.path.slice(homeRoot.length + 1).replaceAll('\\', '/'))}`, loader: 'js' }))
   },
 }
-const bundle = await Bun.build({ entrypoints: [brandLogo ? './tests/browser/brand-logo.tsx' : homeShader ? './tests/browser/home-shader.tsx' : loader ? './tests/browser/loading-logo.tsx' : installedShaders ? './tests/browser/shader-library.tsx' : shaders ? './tests/browser/shader-runtime.tsx' : projectArtwork ? './tests/browser/project-artwork.ts' : './src/lib/media/convert-to-webp.ts'], target: 'browser', write: false, loader: brandLogo ? { '.css': 'text' } : {}, plugins: homeShader ? [homeAssets] : shaders || installedShaders ? [shaderDiscovery()] : [] })
+const bundle = await Bun.build({ entrypoints: [projectCors ? './tests/browser/project-cors.ts' : brandLogo ? './tests/browser/brand-logo.tsx' : homeShader ? './tests/browser/home-shader.tsx' : loader ? './tests/browser/loading-logo.tsx' : installedShaders ? './tests/browser/shader-library.tsx' : shaders ? './tests/browser/shader-runtime.tsx' : projectArtwork ? './tests/browser/project-artwork.ts' : './src/lib/media/convert-to-webp.ts'], target: 'browser', write: false, loader: brandLogo ? { '.css': 'text' } : {}, plugins: homeShader ? [homeAssets] : shaders || installedShaders ? [shaderDiscovery()] : [] })
 if (!bundle.success) throw new Error('Image conversion browser bundle failed')
+let corsRecovered = false
 const server = Bun.serve({
   hostname: '127.0.0.1', port: 0,
   fetch(request) {
     const pathname = new URL(request.url).pathname
+    if (projectCors && pathname === '/cors-recover') { corsRecovered = true; return new Response('ok') }
+    if (projectCors && pathname.startsWith('/cors-image/')) return new Response(Bun.file('./public/terrain/assets/terrain-diffuse.webp'), {
+      headers: { 'cache-control': 'no-store', ...(pathname.includes('/allowed') || corsRecovered ? { 'access-control-allow-origin': new URL(server.url).origin } : {}) },
+    })
+    if (projectCors && pathname === '/project-cors.css') return new Response(Bun.file('./src/components/terrain-recreation/terrain.css'))
     if (brandLogo && pathname === '/logo.svg') return new Promise(resolve => setTimeout(() => resolve(new Response(Bun.file('./public/logo.svg'))), 250))
     if (homeShader && pathname.startsWith('/home-shader-assets/')) {
       const path = resolve(homeRoot, pathname.slice('/home-shader-assets/'.length))
@@ -51,7 +58,7 @@ const server = Bun.serve({
     return new URL(request.url).pathname === '/media.js'
       ? new Response(bundle.outputs[0], { headers: { 'content-type': 'text/javascript' } })
       : brandLogo ? new Response('<!doctype html><html lang="en"><head><link rel="stylesheet" href="/logo.css"><style>body{margin:0;background:#151515;color:white}#result{position:fixed;top:80px;white-space:pre-wrap}</style></head><body><div id="app"></div><pre id="result">Running logo checks…</pre><script type="module" src="/media.js"></script></body></html>', { headers: { 'content-type': 'text/html' } })
-        : new Response(Bun.file(homeShader ? './tests/browser/home-shader.html' : loader ? './tests/browser/loading-logo.html' : shaders || installedShaders ? './tests/browser/shader-runtime.html' : projectArtwork ? './tests/browser/project-artwork.html' : './tests/browser/image-conversion.html'))
+        : new Response(Bun.file(projectCors ? './tests/browser/project-cors.html' : homeShader ? './tests/browser/home-shader.html' : loader ? './tests/browser/loading-logo.html' : shaders || installedShaders ? './tests/browser/shader-runtime.html' : projectArtwork ? './tests/browser/project-artwork.html' : './tests/browser/image-conversion.html'))
   },
 })
 try {

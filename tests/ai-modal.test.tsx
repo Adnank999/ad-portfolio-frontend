@@ -128,7 +128,7 @@ describe('shared AI generator and real CMS form integration', () => {
 
   test('uploads multiple project images, edits alt text and captions, reorders and saves gallery without replacing the cover', async () => {
     uploadAsset.mockClear()
-    render(wrapper(<ContentEditor kind="projects" existing={{ ...existing, fields: { image: '/cover.webp', imageAlt: 'Cover', category: 'SaaS', year: '2026', gallery: [] } }} />))
+    render(wrapper(<ContentEditor kind="projects" existing={{ ...existing, fields: { image: '/cover.webp', imageAlt: 'Cover', thumbnailUrl: '/thumbnail.webp', category: 'SaaS', year: '2026', gallery: [] } }} />))
     const files = ['first.jpg', 'bad.jpg', 'last.jpg'].map((name) => new File(['image'], name, { type: 'image/jpeg' }))
     fireEvent.change(screen.getByLabelText('Upload project gallery images'), { target: { files } })
     await screen.findByText(/bad.jpg: Storage unavailable/)
@@ -147,6 +147,26 @@ describe('shared AI generator and real CMS form integration', () => {
     expect((screen.getByLabelText('Gallery image 1 alt text *') as HTMLInputElement).value).toBe('Search results')
     expect(save).toHaveBeenCalledTimes(1)
   })
+  test('requires a thumbnail and saves one featured image while preserving cover and gallery', async () => {
+    render(wrapper(<ContentEditor kind="projects" existing={{ ...existing, fields: { image: '/cover.webp', imageAlt: 'Cover', category: 'SaaS', year: '2026', gallery: [{ url: '/first.webp', alt: 'First image', caption: '' }, { url: '/second.webp', alt: 'Second image', caption: '' }] } }} />))
+    const submit = () => fireEvent.submit(screen.getByRole('button', { name: 'Save changes' }).closest('form')!)
+    submit()
+    await screen.findByText('Add a valid terrain thumbnail URL before saving this project.')
+    expect(save).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByLabelText('Terrain thumbnail URL'), { target: { value: '/small-thumbnail.webp' } })
+    fireEvent.click(screen.getByLabelText('Use gallery image 1 as featured image'))
+    expect((screen.getByLabelText('Use project cover as featured image') as HTMLInputElement).checked).toBe(false)
+    fireEvent.click(screen.getByLabelText('Use gallery image 2 as featured image'))
+    expect((screen.getByLabelText('Use gallery image 1 as featured image') as HTMLInputElement).checked).toBe(false)
+    fireEvent.click(screen.getByRole('button', { name: 'Move gallery image 2 up' }))
+    expect((screen.getByLabelText('Use gallery image 1 as featured image') as HTMLInputElement).checked).toBe(true)
+    submit()
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1))
+    expect(save.mock.calls[0][0].fields).toMatchObject({ image: '/cover.webp', thumbnailUrl: '/small-thumbnail.webp', featuredImageUrl: '/second.webp' })
+    fireEvent.click(screen.getByRole('button', { name: 'Remove gallery image 1' }))
+    expect((screen.getByLabelText('Use project cover as featured image') as HTMLInputElement).checked).toBe(true)
+  })
+
   test('prevents oversized gallery selections and saving during pending uploads', async () => {
     uploadAsset.mockClear()
     render(wrapper(<ContentEditor kind="projects" />))

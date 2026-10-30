@@ -4,6 +4,15 @@ export type ProjectGalleryImage = { url: string; alt: string; caption: string }
 export const maxProjectGalleryImages = 20
 export const projectImageTypes = ['image/jpeg', 'image/png', 'image/webp']
 
+export function assertProjectImages(fields: Record<string, JsonValue>) {
+  const thumbnail = typeof fields.thumbnailUrl === 'string' ? fields.thumbnailUrl.trim() : ''
+  let valid = thumbnail.startsWith('/') && !thumbnail.startsWith('//')
+  try { const url = new URL(thumbnail); valid = ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password } catch {}
+  if (!valid || thumbnail.length > 2048 || /[\x00-\x20\\]/.test(thumbnail)) throw new Error('Add a valid terrain thumbnail URL before saving this project.')
+  const featured = typeof fields.featuredImageUrl === 'string' && fields.featuredImageUrl ? fields.featuredImageUrl : fields.image
+  if (featured !== fields.image && !readProjectGallery(fields.gallery).some(image => image.url === featured)) throw new Error('Choose the featured image from the project cover or gallery.')
+}
+
 export function readProjectGallery(value: JsonValue | undefined): ProjectGalleryImage[] {
   if (!Array.isArray(value)) return []
   return value.flatMap((image) => image && typeof image === 'object' && !Array.isArray(image) && typeof image.url === 'string' && typeof image.alt === 'string'

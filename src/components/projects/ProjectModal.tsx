@@ -79,7 +79,7 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
                 >
                   <motion.img
                     layoutId={`card-image-${project.id}`}
-                    src={project.image}
+                    src={project.featuredImageUrl || project.image}
                     alt={`${project.title} detailed preview`}
                     className="aspect-[16/8] w-full object-cover"
                   />

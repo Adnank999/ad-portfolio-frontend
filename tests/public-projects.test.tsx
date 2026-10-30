@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test'
+import { expect, mock, test } from 'bun:test'
 import { renderToString } from 'react-dom/server'
 import { loadPublishedProjects, projectFromRecord, type ProjectRecord } from '../src/lib/public-projects'
 import { toTerrainProjects } from '../src/components/terrain-recreation/project-data'
@@ -13,6 +13,7 @@ const record: ProjectRecord = {
   image: 'https://media.example.test/project.webp', imageAlt: 'Real project cover', category: 'Web', year: '2026', technologies: ['Rust', 'React'],
   githubUrl: '', liveUrl: '', featured: true,
   gallery: [{ url: 'https://media.example.test/detail.webp', alt: 'A real detail', caption: 'Saved caption' }],
+  thumbnailUrl: 'https://media.example.test/thumb.webp', featuredImageUrl: 'https://media.example.test/detail.webp',
 }
 
 test('public projects load every API page with no seed additions', async () => {
@@ -25,6 +26,9 @@ test('public projects load every API page with no seed additions', async () => {
   expect(data.map(project => project.id)).toEqual(['database-id', 'second-db-id'])
   expect(data[0].media).toEqual([{ type: 'image', src: record.gallery![0].url, alt: 'A real detail', caption: 'Saved caption' }])
   expect(data[0].overview).toBe('')
+  expect(toTerrainProjects(data)[0].imageUrl).toBe(record.thumbnailUrl)
+  expect(toTerrainProjects(data)[0].heroImageUrl).toBe(record.featuredImageUrl)
+  expect(data[0].featuredImageAlt).toBe('A real detail')
   expect(projectFromRecord({ ...record, overview: 'Saved overview', features: ['Saved feature'] }).features).toEqual(['Saved feature'])
 })
 
@@ -78,11 +82,59 @@ test('a single database project renders hydrated detail updates without dummy ne
   const detail = projectFromRecord({ ...record, overview: 'Saved full overview', features: ['Database feature'] })
   page.syncRoute(record.slug, detail)
   expect(host.querySelector('h1')?.textContent).toBe(record.title)
+  expect(host.querySelector('.case-hero-image')?.getAttribute('src')).toBe(record.featuredImageUrl)
   expect(host.querySelector('.case-summary')?.textContent).toBe('Saved full overview')
   expect(host.querySelector('.case-features')?.textContent).toContain('Database feature')
   expect((host.querySelector('.case-next') as HTMLAnchorElement).hidden).toBe(true)
   page.syncRoute(record.slug, { ...detail, overview: 'Edited database overview' })
   expect(host.querySelector('.case-summary')?.textContent).toBe('Edited database overview')
   expect(host.innerHTML).not.toContain('hotel-booking-platform')
+  page.dispose(); host.remove()
+})
+
+test('late full-image responses cannot replace a newer project hero', async () => {
+  const host = document.createElement('div'); document.body.append(host)
+  const complete = new Map<string, (texture: unknown) => void>()
+  const first = projectFromRecord(record), second = { ...first, slug: 'second-project', title: 'Second project', featuredImageUrl: '/second-hero.webp' }
+  let active = false
+  const pass = {
+    transition: { getState: () => ({ active }), open: () => { active = true }, close: () => { active = false } },
+    setLayout() {}, setProject: mock(() => {}), resetImages() {}, revealImage() {}, hoverImage() {}, setImageVisibility() {}, setMediaLayout() {}, setMediaImage() {}, pointer: { set() {} },
+  }
+  const artwork = { image: { width: 320, height: 180 } }
+  const page = createProjectPage({ host, pass, projects: toTerrainProjects([first, second]), getArtwork: () => artwork,
+    loadArtwork: (id: string) => new Promise(resolve => complete.set(id, resolve)), noise: {}, imageBase: '/', reducedMotion: true, onNavigate() {} })
+  page.syncRoute(first.slug, first)
+  page.syncRoute(second.slug, second)
+  const full = { image: { width: 1200, height: 900 } }
+  complete.get(second.slug)!(full)
+  await Promise.resolve()
+  expect(pass.setProject.mock.calls.at(-1)?.[0]).toBe(second.slug)
+  expect(pass.setProject.mock.calls.at(-1)?.[1]).toBe(full)
+  const count = pass.setProject.mock.calls.length
+  complete.get(first.slug)!(artwork)
+  await Promise.resolve()
+  expect(pass.setProject).toHaveBeenCalledTimes(count)
+  expect(host.querySelector('.case-hero-image')?.getAttribute('src')).toBe('/second-hero.webp')
+  page.dispose(); host.remove()
+})
+
+test('failed hero textures keep a readable native image without uploading it into WebGL', async () => {
+  const host = document.createElement('div'); document.body.append(host)
+  let active = false
+  const visibility = mock(() => {})
+  const pass = { transition: { getState: () => ({ active }), open: () => { active = true }, close() {} }, setLayout() {}, setProject() {}, resetImages() {}, revealImage() {}, hoverImage() {}, setImageVisibility: visibility, setMediaLayout() {}, setMediaImage() {}, pointer: { set() {} } }
+  const artwork = { image: { width: 320, height: 180 } }
+  const detail = projectFromRecord(record)
+  const page = createProjectPage({ host, pass, projects: toTerrainProjects([detail]), getArtwork: () => artwork, loadArtwork: async () => null, noise: {}, imageBase: '/', reducedMotion: true, onNavigate() {} })
+  page.syncRoute(detail.slug, detail)
+  await Promise.resolve()
+  const image = host.querySelector('.case-hero-image') as HTMLImageElement
+  expect(image.crossOrigin).toBe('anonymous')
+  image.dispatchEvent(new Event('error'))
+  expect(image.hasAttribute('crossorigin')).toBe(false)
+  expect(image.src).toBe(record.featuredImageUrl)
+  expect(host.querySelector('.case-art')?.getAttribute('data-render-mode')).toBe('native')
+  expect(visibility).toHaveBeenCalledWith('hero', 0)
   page.dispose(); host.remove()
 })

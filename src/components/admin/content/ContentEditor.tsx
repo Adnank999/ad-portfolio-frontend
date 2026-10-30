@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useId, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useRouteContext } from '@tanstack/react-router'
 import { ArrowLeft, ExternalLink, Plus, Save, Trash2, UploadCloud } from 'lucide-react'
 import { Button } from '@/components/admin/ui/button'
@@ -15,7 +15,7 @@ import { RichTextEditor, type RichTextEditorHandle } from './RichTextEditor'
 import { AIContentGeneratorModal } from '@/components/admin/ai-content-generator/AIContentGeneratorModal'
 import { applyProposals } from '@/lib/ai-content/apply'
 import type { AIField, AIProposal } from '@/lib/ai-content/contracts'
-import { readProjectGallery } from '@/lib/project-gallery'
+import { assertProjectImages, readProjectGallery } from '@/lib/project-gallery'
 import { ProjectGalleryField } from './ProjectGalleryField'
 import { CaseStudyFields } from '@/components/admin/case-study-fields/CaseStudyFields'
 import { ServiceFields } from '@/components/admin/service-fields/ServiceFields'
@@ -34,7 +34,7 @@ function defaults(kind: ContentKind): ContentWrite {
       industry: 'technology-saas', studyType: 'portfolio', image: '', imageAlt: '', gallery: [],
       context: '', problem: '', solution: '', steps: [], technologies: [], outcomes: [], lessons: [], projectSlug: '',
     } : {
-      image: '', imageAlt: '', category: '', year: String(new Date().getFullYear()),
+      image: '', imageAlt: '', thumbnailUrl: '', featuredImageUrl: '', category: '', year: String(new Date().getFullYear()),
       technologies: [], githubUrl: '', liveUrl: '', featured: false, overview: '', problem: '',
       solution: '', features: [], technical: '', challenges: '', results: '', gallery: [],
     },
@@ -72,11 +72,12 @@ function ContentEditorForm({ kind, existing }: { kind: ContentKind; existing?: C
   const [validationError, setValidationError] = useState('')
   const [galleryUploading, setGalleryUploading] = useState(false)
   const [primaryUploading, setPrimaryUploading] = useState(false)
+  const [thumbnailUploading, setThumbnailUploading] = useState(false)
   const [validatingShader, setValidatingShader] = useState(false)
   const create = useCreateContent(kind)
   const update = useUpdateContent(kind, existing?.id ?? '')
   const saving = create.isPending || update.isPending || validatingShader
-  const busy = saving || validatingShader || galleryUploading || primaryUploading || !!imageUploads?.busy
+  const busy = saving || validatingShader || galleryUploading || primaryUploading || thumbnailUploading || !!imageUploads?.busy
   const error = create.error ?? update.error
   const canWrite = account.permissions.includes(`${kind}:write`)
   const canPublish = account.permissions.includes(`${kind}:publish`)
@@ -88,6 +89,11 @@ function ContentEditorForm({ kind, existing }: { kind: ContentKind; existing?: C
 
   function field(name: string, value: JsonValue) {
     setDocument((current) => ({ ...current, fields: { ...current.fields, [name]: value } }))
+  }
+  function projectCover(value: string) {
+    setDocument(current => ({ ...current, fields: { ...current.fields, image: value,
+      featuredImageUrl: !current.fields.featuredImageUrl || current.fields.featuredImageUrl === current.fields.image ? value : current.fields.featuredImageUrl,
+    } }))
   }
   function seo(name: keyof SeoFields, value: string | boolean) {
     setDocument((current) => ({ ...current, seo: { ...current.seo, [name]: value } }))
@@ -118,6 +124,7 @@ function ContentEditorForm({ kind, existing }: { kind: ContentKind; existing?: C
           if (shaders.some(visual => !backendHasShader(catalog, visual.shader))) throw new Error('Deploy matching frontend/backend shader manifests before saving this service.')
         }
       }
+      if (kind === 'projects') assertProjectImages(document.fields)
       let structuredData = null
       if (structuredDataText.trim()) {
         try {
@@ -163,9 +170,21 @@ function ContentEditorForm({ kind, existing }: { kind: ContentKind; existing?: C
         {kind !== 'services' && <Card><CardHeader><CardTitle>Rich content</CardTitle><p className="text-xs leading-5 text-zinc-500">Format the body, add images with alt text, and build tables. Existing structured content remains in place until you edit here.</p></CardHeader><CardContent><RichTextEditor ref={editorRef} initialDocument={existing?.editorContent ?? null} initialHtml={initialHtml} value={document.editorContent} onChange={(value) => setDocument((current) => ({ ...current, editorContent: value }))} /></CardContent></Card>}
         <Card><CardHeader><CardTitle>{kind === 'services' ? 'Service details' : kind === 'blogs' ? 'Article details' : kind === 'case-studies' ? 'Case study details' : 'Project details'}</CardTitle></CardHeader><CardContent className="space-y-5">
           {kind === 'services' ? <ServiceFields fields={document.fields} onChange={field} onBusyChange={setPrimaryUploading} disabled={saving || !canSave} /> : <>
-          <ImageField onBusyChange={setPrimaryUploading} disabled={saving || !canSave} label={kind === 'blogs' ? 'Cover image' : kind === 'case-studies' ? 'Case study image' : 'Project image'} value={text(document.fields[primaryImage])} onChange={(value) => { field(primaryImage, value); if (kind === 'blogs' && !document.fields.socialImage) field('socialImage', value) }} />
+          <ImageField onBusyChange={setPrimaryUploading} disabled={saving || !canSave} label={kind === 'blogs' ? 'Cover image' : kind === 'case-studies' ? 'Case study image' : 'Project image'} value={text(document.fields[primaryImage])} onChange={(value) => { if (kind === 'projects') projectCover(value); else field(primaryImage, value); if (kind === 'blogs' && !document.fields.socialImage) field('socialImage', value) }} />
           <Field label="Image alt text" id="image-alt"><Input id="image-alt" value={text(document.fields[altField])} onChange={(event) => field(altField, event.target.value)} maxLength={500} required /></Field>
-          {kind !== 'blogs' && <ProjectGalleryField label={kind === 'case-studies' ? 'Case study' : 'Project'} images={readProjectGallery(document.fields.gallery)} onChange={(update) => setDocument((current) => ({ ...current, fields: { ...current.fields, gallery: update(readProjectGallery(current.fields.gallery)) } }))} onBusyChange={setGalleryUploading} disabled={create.isPending || update.isPending || !canSave} />}
+          {kind === 'projects' && <>
+            <ImageField label="Terrain thumbnail URL" slot="gallery" value={text(document.fields.thumbnailUrl)} onChange={value => field('thumbnailUrl', value)} onBusyChange={setThumbnailUploading} disabled={saving || !canSave} />
+            <p className="text-xs leading-6 text-zinc-500">Required for the project overview’s WebGL preview. Paste a public image URL or upload a smaller image.</p>
+            <label className="flex min-h-11 items-center gap-3 text-xs text-zinc-300"><input type="checkbox" className="accent-accent-500" disabled={busy || !canSave || !document.fields.image} checked={!document.fields.featuredImageUrl || document.fields.featuredImageUrl === document.fields.image} onChange={() => field('featuredImageUrl', text(document.fields.image))} />Use project cover as featured image</label>
+            <p className="text-xs leading-6 text-zinc-500">One featured image appears at the top of the project details. Select the cover here or a gallery image below.</p>
+          </>}
+          {kind !== 'blogs' && <ProjectGalleryField label={kind === 'case-studies' ? 'Case study' : 'Project'} images={readProjectGallery(document.fields.gallery)} featuredImageUrl={kind === 'projects' ? text(document.fields.featuredImageUrl) || text(document.fields.image) : undefined} onFeaturedChange={kind === 'projects' ? value => field('featuredImageUrl', value || text(document.fields.image)) : undefined} onChange={(update) => setDocument((current) => {
+            const gallery = update(readProjectGallery(current.fields.gallery))
+            const featured = text(current.fields.featuredImageUrl)
+            return { ...current, fields: { ...current.fields, gallery,
+              ...(kind === 'projects' && featured && featured !== current.fields.image && !gallery.some(image => image.url === featured) ? { featuredImageUrl: text(current.fields.image) } : {}),
+            } }
+          })} onBusyChange={setGalleryUploading} disabled={create.isPending || update.isPending || !canSave} />}
           {kind === 'case-studies' ? <CaseStudyFields fields={document.fields} onChange={field} /> : <>
           <Field label="Category" id="content-category">{kind === 'blogs' ? <select id="content-category" value={text(document.fields.category)} onChange={(event) => field('category', event.target.value)} className="h-11 w-full rounded-lg border border-white/12 bg-[#0e0e12] px-3 text-xs text-white"><option value="insights">Insights</option><option value="growth">Growth</option><option value="ai">AI</option><option value="news">News</option></select> : <Input id="content-category" value={text(document.fields.category)} onChange={(event) => field('category', event.target.value)} required />}</Field>
           {kind === 'blogs' ? <><Field label="Social image URL" id="social-image"><Input id="social-image" value={text(document.fields.socialImage)} onChange={(event) => field('socialImage', event.target.value)} required /></Field><Field label="Tags (one per line)" id="content-tags"><Textarea id="content-tags" value={list(document.fields.tags)} onChange={(event) => field('tags', lines(event.target.value))} /></Field></> : <>
@@ -193,8 +212,9 @@ function Field({ label, id, children }: { label: string; id: string; children: R
   return <div className="space-y-2"><Label htmlFor={id}>{label}</Label>{children}</div>
 }
 
-function ImageField({ label, value, onChange, onBusyChange, disabled }: { label: string; value: string; onChange: (value: string) => void; onBusyChange: (busy: boolean) => void; disabled: boolean }) {
-  const upload = useImageUpload('cover')
+function ImageField({ label, value, onChange, onBusyChange, disabled, slot = 'cover' }: { label: string; value: string; onChange: (value: string) => void; onBusyChange: (busy: boolean) => void; disabled: boolean; slot?: 'cover' | 'gallery' }) {
+  const id = useId()
+  const upload = useImageUpload(slot)
   async function select(file: File | undefined) {
     if (!file || disabled || upload.isPending) return
     onBusyChange(true)
@@ -205,5 +225,5 @@ function ImageField({ label, value, onChange, onBusyChange, disabled }: { label:
     onBusyChange(true)
     try { onChange(await upload.retryLast()) } catch {} finally { onBusyChange(false) }
   }
-  return <div className="space-y-2"><Label htmlFor="main-image">{label}</Label><div className="flex gap-2"><Input id="main-image" disabled={disabled || upload.isPending} value={value} onChange={(event) => onChange(event.target.value)} placeholder="https://… or /images/…" required /><label className="inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-white/12 px-3 text-xs text-zinc-300 hover:bg-white/[0.06]"><UploadCloud size={15} /> {upload.isPending ? 'Uploading…' : 'Upload'}<input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => { void select(event.target.files?.[0]); event.target.value = '' }} disabled={disabled || upload.isPending} /></label></div><p className="text-xs text-zinc-500">Still JPEG/PNG/WebP, up to 20 MiB. Covers use a centered 16:9 crop without stretching.</p><ImageUploadStatus upload={upload} onRetry={disabled ? undefined : () => void retry()} />{upload.error && <p role="alert" className="text-xs text-red-300">{upload.error.message}</p>}{value && <img src={value} alt="Selected media preview" className="mt-3 h-36 w-full rounded-lg object-cover" />}</div>
+  return <div className="space-y-2"><Label htmlFor={id}>{label}</Label><div className="flex gap-2"><Input id={id} disabled={disabled || upload.isPending} value={value} onChange={(event) => onChange(event.target.value)} placeholder="https://… or /images/…" maxLength={2048} required /><label className="inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-white/12 px-3 text-xs text-zinc-300 hover:bg-white/[0.06]"><UploadCloud size={15} /> {upload.isPending ? 'Uploading…' : 'Upload'}<input type="file" aria-label={`Upload ${label.toLowerCase()}`} accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => { void select(event.target.files?.[0]); event.target.value = '' }} disabled={disabled || upload.isPending} /></label></div><p className="text-xs text-zinc-500">Still JPEG/PNG/WebP, up to 20 MiB. {slot === 'cover' ? 'Covers use a centered 16:9 crop without stretching.' : 'Thumbnails preserve their aspect ratio without upscaling.'}</p><ImageUploadStatus upload={upload} onRetry={disabled ? undefined : () => void retry()} />{upload.error && <p role="alert" className="text-xs text-red-300">{upload.error.message}</p>}{value && <img src={value} alt="Selected media preview" className="mt-3 h-36 w-full rounded-lg object-cover" />}</div>
 }

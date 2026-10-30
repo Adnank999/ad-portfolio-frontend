@@ -102,7 +102,7 @@ export class ProjectShowcasePass extends ShaderPass {
 
   setProject(id, artwork, nextArtwork, noise, regions = {}) {
     const uniforms = this.uniforms;
-    if (this.projectId === id) return;
+      if (this.projectId === id && uniforms.uArtwork.value === artwork && uniforms.uNextArtwork.value === nextArtwork) return;
     uniforms.uPreviousArtwork.value = uniforms.uArtwork.value || artwork;
     uniforms.uPreviousAspect.value = uniforms.uArtAspect.value;
     uniforms.uPreviousCrop.value.copy(uniforms.uArtCrop.value);

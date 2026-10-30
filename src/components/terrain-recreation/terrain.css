@@ -1349,6 +1349,7 @@
   object-fit: cover;
   opacity: 0;
 }
+:where(.terrain-experience) .case-art[data-render-mode="native"] .case-hero-image { opacity: 1; }
 :where(.terrain-experience) .case-media-list {
   width: 100vw;
   position: relative;

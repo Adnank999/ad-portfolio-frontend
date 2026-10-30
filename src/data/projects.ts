@@ -15,6 +15,9 @@ export type Project = {
   description: string
   image: string
   imageAlt?: string
+  thumbnailUrl?: string
+  featuredImageUrl?: string
+  featuredImageAlt?: string
   media?: ProjectMedia[]
   category: string
   year: string

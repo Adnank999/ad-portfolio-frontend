@@ -37,7 +37,7 @@ export function ProjectDetail({ project, projects = [] }: { project: Project; pr
           style={projectTransitionStyle(project.slug, "image")}
         >
           <img
-            src={project.image}
+            src={project.featuredImageUrl || project.image}
             alt={`${project.title} detailed project preview`}
             width={1600}
             height={800}

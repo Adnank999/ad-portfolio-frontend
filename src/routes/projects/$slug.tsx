@@ -26,7 +26,7 @@ export const Route = createFileRoute("/projects/$slug")({
         content: `${loaderData.project.title} — Adnan Hossain Khan`,
       },
       { property: "og:description", content: loaderData.project.description },
-      { property: "og:image", content: loaderData.seo?.socialImage || loaderData.project.image },
+      { property: "og:image", content: loaderData.seo?.ogImage || loaderData.seo?.socialImage || loaderData.project.featuredImageUrl || loaderData.project.image },
       ...(loaderData.seo?.noIndex ? [{ name: 'robots', content: 'noindex, nofollow' }] : []),
       { property: "og:type", content: "article" },
     ],

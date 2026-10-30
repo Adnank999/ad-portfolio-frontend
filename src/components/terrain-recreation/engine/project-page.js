@@ -9,7 +9,7 @@ export function getImageScrollReveal(rectangle, height, reducedMotion = false) {
   return Math.min(entering, leaving);
 }
 
-export function createProjectPage({ host, pass, getArtwork, noise, imageBase, projects = [], base = '/', reducedMotion = false,
+export function createProjectPage({ host, pass, getArtwork, loadArtwork, noise, imageBase, projects = [], base = '/', reducedMotion = false,
   onProject = () => {}, onActive = () => {}, onImageHover = () => {}, onNavigate = null, eventTarget = window, documentTarget = document }) {
   const catalog = createProjectCatalog(projects);
   const { getProject, getNextProject, projectFromPath } = catalog;
@@ -23,6 +23,7 @@ export function createProjectPage({ host, pass, getArtwork, noise, imageBase, pr
   let hero = null, nextArt = null, mediaArt = null, progressBar = null, depth = 0, returning = false;
   let hostBounds = null, pointerImage = null, focusImage = null, lastAmount = -1;
   let smallImages = [];
+  let artworkRequest = 0;
   const pauseVideos = () => root.querySelectorAll('video').forEach(video => video.pause());
   if (!onNavigate) eventTarget.history.replaceState({ ...eventTarget.history.state, terrainShowcase: {
     session, depth: 0, overview: !projectFromPath(eventTarget.location.pathname, base),
@@ -37,7 +38,7 @@ export function createProjectPage({ host, pass, getArtwork, noise, imageBase, pr
     };
     pass.setLayout(relativeBounds(hero), relativeBounds(nextArt), Math.max(1, hostBounds.width), Math.max(1, hostBounds.height), relativeBounds(mediaArt));
     for (const [slot, element] of [['hero', hero], ['next', nextArt]]) {
-      pass.setImageVisibility(slot, getImageScrollReveal(relativeBounds(element), hostBounds.height, reducedMotion));
+      pass.setImageVisibility(slot, slot === 'hero' && element.dataset.renderMode === 'native' ? 0 : getImageScrollReveal(relativeBounds(element), hostBounds.height, reducedMotion));
     }
     pass.setMediaLayout(smallImages.map(({ id, element }) => {
       const rectangle = relativeBounds(element);
@@ -56,7 +57,7 @@ export function createProjectPage({ host, pass, getArtwork, noise, imageBase, pr
     const next = getNextProject(project.id);
     root.setAttribute('aria-label', `${project.title} project showcase`);
     root.innerHTML = `
-      <figure class="case-art" data-image-effect="hero"><img class="case-hero-image" alt="" decoding="async" fetchpriority="high"></figure>
+      <figure class="case-art" data-image-effect="hero" data-render-mode="${loadArtwork ? 'native' : 'webgl'}"><img class="case-hero-image" alt="" decoding="async" fetchpriority="high"></figure>
       <div class="case-content">
         <section class="case-intro" aria-labelledby="case-title">
           <div class="case-heading case-reveal"><p class="case-eyebrow">PROJECT SHOWCASE</p><h1 id="case-title" tabindex="-1"></h1></div>
@@ -98,7 +99,7 @@ export function createProjectPage({ host, pass, getArtwork, noise, imageBase, pr
       const heading = documentTarget.createElement('h3'), text = documentTarget.createElement('p');
       heading.textContent = title; text.textContent = description; section.append(heading, text); services.append(section);
     }
-    const artwork = getArtwork(project.id).image;
+    const artwork = getArtwork(project.id, project.heroImageUrl).image;
     const artworkWidth = artwork.naturalWidth || artwork.width, artworkHeight = artwork.naturalHeight || artwork.height;
     const artworkAspect = artworkWidth / artworkHeight;
     const prepareImage = (image, item) => {
@@ -114,14 +115,20 @@ export function createProjectPage({ host, pass, getArtwork, noise, imageBase, pr
       });
       image.addEventListener('error', () => {
         if (image.crossOrigin && !image.dataset.nativeOnly) {
-          image.dataset.nativeOnly = 'true'; image.removeAttribute('crossorigin'); image.src = item.src; return;
+          image.dataset.nativeOnly = 'true'; image.removeAttribute('crossorigin'); image.src = item.src;
+          if (image.closest('[data-image-effect]')?.dataset.imageEffect === 'hero') {
+            image.closest('.case-art').dataset.renderMode = 'native'; measure();
+          }
+          return;
         }
         if (image.dataset.fallback) return;
         image.dataset.fallback = 'true'; image.src = imageBase + 'terrain-diffuse.webp';
       });
       image.src = item.src;
     };
-    prepareImage(root.querySelector('.case-hero-image'), { src: project.imageUrl, alt: `${project.title} project preview` });
+    const heroImage = root.querySelector('.case-hero-image');
+    heroImage.crossOrigin = 'anonymous';
+    prepareImage(heroImage, { src: project.heroImageUrl || project.imageUrl, alt: project.heroImageAlt || `${project.title} project preview` });
     const images = getProjectMedia(project);
     for (const [index, item] of images.entries()) {
       const figure = documentTarget.createElement('figure'); figure.className = 'case-media';
@@ -154,7 +161,8 @@ export function createProjectPage({ host, pass, getArtwork, noise, imageBase, pr
     nextLink.setAttribute('aria-label', `Next project: ${next.title}`);
     nextLink.querySelector('.case-next-title').textContent = next.title;
     hero = root.querySelector('.case-art'); nextArt = root.querySelector('.case-next-art');
-    prepareImage(root.querySelector('.case-next-image'), { src: next.imageUrl, alt: `${next.title} project preview` });
+    const nextImage = root.querySelector('.case-next-image'); nextImage.crossOrigin = 'anonymous';
+    prepareImage(nextImage, { src: next.imageUrl, alt: `${next.title} project preview` });
     hero.style.setProperty('--case-art-aspect', String(artworkAspect));
     mediaArt = root.querySelector('.case-image') || hero;
     progressBar = root.querySelector('.case-scroll-track span');
@@ -193,9 +201,23 @@ export function createProjectPage({ host, pass, getArtwork, noise, imageBase, pr
     host.classList.add('is-showcasing');
     onActive(true); onProject(id);
     const next = getNextProject(id);
-    pass.setProject(id, getArtwork(id), getArtwork(next.id), noise, { current: project.artworkCrop, next: next.artworkCrop });
+    pass.setProject(id, getArtwork(id, project.heroImageUrl), getArtwork(next.id), noise, { current: project.artworkCrop, next: next.artworkCrop });
     pass.transition.open();
     if (changed || !wasActive) renderProject(project);
+    const request = ++artworkRequest;
+    const showNativeHero = () => {
+      if (destroyed || request !== artworkRequest || current?.id !== id || !hero) return;
+      hero.dataset.renderMode = 'native'; measure();
+    };
+    if (loadArtwork) void loadArtwork(id, project.heroImageUrl || project.imageUrl).then(texture => {
+      if (destroyed || request !== artworkRequest || current?.id !== id) return;
+      if (!texture) { showNativeHero(); return; }
+      pass.setProject(id, texture, getArtwork(next.id), noise, { current: project.artworkCrop, next: next.artworkCrop });
+      hero.dataset.renderMode = 'webgl';
+      const image = texture.image;
+      if (hero && image?.width && image?.height) hero.style.setProperty('--case-art-aspect', String(image.width / image.height));
+      measure();
+    }).catch(showNativeHero);
     root.dataset.phase = 'opening';
     phase = 'opening'; if (!onNavigate) documentTarget.title = `${project.title} — Adnan Hossain Khan`;
     if (wasActive && changed) root.querySelector('#case-title')?.focus({ preventScroll: true });
@@ -203,6 +225,7 @@ export function createProjectPage({ host, pass, getArtwork, noise, imageBase, pr
   }
 
   function close() {
+    artworkRequest++;
     if (destroyed || !pass.transition.getState().active) return;
     root.inert = true; root.dataset.phase = 'closing';
     pauseVideos();
@@ -298,6 +321,7 @@ export function createProjectPage({ host, pass, getArtwork, noise, imageBase, pr
     },
     getState: () => ({ ...pass.transition.getState(), project: current?.id || null, depth, scrollTop: root.scrollTop }),
     dispose() {
+      artworkRequest++;
       if (destroyed) return;
       destroyed = true; observer?.disconnect(); pauseVideos();
       eventTarget.removeEventListener('popstate', onPop); eventTarget.removeEventListener('keydown', onKey);

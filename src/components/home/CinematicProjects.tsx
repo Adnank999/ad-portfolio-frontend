@@ -27,7 +27,7 @@ function CinematicProjectCard({ project, index, still, onFocus }: { project: Pro
   }} onPointerLeave={() => { pointerX.set(0); pointerY.set(0) }}>
     <Link to="/projects/$slug" params={{ slug: project.slug }} className="cinema-project-link" onFocus={onFocus}>
       <div className={`cinema-project-image cinema-project-image-${index}`}>
-        {!imageFailed && <motion.img src={project.image} alt="" loading="lazy" decoding="async" width={1200} height={900} onError={() => setImageFailed(true)} style={still ? undefined : { scale: imageScale }} />}
+        {!imageFailed && <motion.img src={project.thumbnailUrl || project.image} alt="" loading="lazy" decoding="async" width={1200} height={900} onError={() => setImageFailed(true)} style={still ? undefined : { scale: imageScale }} />}
         <span className="cinema-project-category">{project.category}</span><span className="cinema-project-arrow"><ArrowUpRight size={27} aria-hidden="true" /></span><span className="cinema-project-image-title" aria-hidden="true">{index === 0 ? 'A world\nof possibilities.' : index === 1 ? 'Clarity,\nat a glance.' : index === 2 ? 'Made for\ndiscovery.' : 'See things\ndifferently.'}</span>
       </div>
       <div className="cinema-project-meta"><div><span className="cinema-micro">0{index + 1} / {project.year}</span><h3>{project.title}</h3><p>{project.technologies.slice(0, 3).join(' / ')}</p></div><ArrowUpRight size={22} aria-hidden="true" /></div>

@@ -7,12 +7,14 @@ import { maxProjectGalleryImages, projectImageTypes, type ProjectGalleryImage } 
 import { useProjectGalleryUpload } from '@/queries/assets/useProjectGalleryUpload'
 import { ImageUploadStatus } from './ImageUploadStatus'
 
-export function ProjectGalleryField({ images, onChange, onBusyChange, disabled, label = 'Project' }: {
+export function ProjectGalleryField({ images, onChange, onBusyChange, disabled, label = 'Project', featuredImageUrl, onFeaturedChange }: {
   label?: string
   images: ProjectGalleryImage[]
   onChange: (update: (current: ProjectGalleryImage[]) => ProjectGalleryImage[]) => void
   onBusyChange: (busy: boolean) => void
   disabled: boolean
+  featuredImageUrl?: string
+  onFeaturedChange?: (url: string) => void
 }) {
   const prefix = useId()
   const upload = useProjectGalleryUpload()
@@ -64,6 +66,7 @@ export function ProjectGalleryField({ images, onChange, onBusyChange, disabled, 
       <div className="flex items-center gap-3"><img src={image.url} alt={image.alt || 'Gallery image awaiting alt text'} className="h-20 w-28 rounded-md bg-white/5 object-contain" loading="lazy" /><span className="min-w-0 flex-1 text-xs text-zinc-400">Image {index + 1}</span><div className="flex gap-1"><Button type="button" variant="ghost" size="icon" disabled={locked || index === 0} aria-label={`Move gallery image ${index + 1} up`} onClick={() => move(index, -1)}><ArrowUp size={14} /></Button><Button type="button" variant="ghost" size="icon" disabled={locked || index === images.length - 1} aria-label={`Move gallery image ${index + 1} down`} onClick={() => move(index, 1)}><ArrowDown size={14} /></Button><Button type="button" variant="ghost" size="icon" disabled={locked} aria-label={`Remove gallery image ${index + 1}`} onClick={() => onChange((current) => current.filter((_, position) => position !== index))}><Trash2 size={14} /></Button></div></div>
       <div className="space-y-2"><Label htmlFor={`${prefix}-alt-${index}`}>Gallery image {index + 1} alt text *</Label><Input id={`${prefix}-alt-${index}`} value={image.alt} onChange={(event) => update(index, 'alt', event.target.value)} maxLength={500} required pattern=".*\S.*" disabled={locked} placeholder="Describe what this screenshot shows" /></div>
       <div className="space-y-2"><Label htmlFor={`${prefix}-caption-${index}`}>Gallery image {index + 1} caption</Label><Input id={`${prefix}-caption-${index}`} value={image.caption} onChange={(event) => update(index, 'caption', event.target.value)} maxLength={1000} disabled={locked} /></div>
+      {onFeaturedChange && <label className="flex min-h-11 items-center gap-3 text-xs text-zinc-300"><input type="checkbox" className="accent-accent-500" checked={featuredImageUrl === image.url} disabled={locked} onChange={event => onFeaturedChange(event.target.checked ? image.url : '')} />Use gallery image {index + 1} as featured image</label>}
       <p className="break-all text-[10px] leading-5 text-zinc-600">{image.url}</p>
     </li>)}</ol>
     {images.length > 0 && <p className="text-[10px] leading-5 text-zinc-500">Save changes to persist the gallery. Removing an image here does not delete the uploaded R2 object.</p>}

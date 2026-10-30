@@ -2,6 +2,16 @@
 
 ## Published project data
 
+### Thumbnail and featured image
+
+Admin Projects require a **Terrain thumbnail URL**. Paste a public HTTP(S) or root-relative image URL, or use its upload button (the existing verified project-gallery upload flow). It is saved as `fields.thumbnailUrl` and used for terrain overview portals and project cards. Thumbnail URLs on the managed R2 domain still require a verified asset reference; uploading through the field registers this automatically.
+
+Select **Use project cover as featured image**, or a gallery image's **Use as featured image** checkbox. Only one image is selected, independently of the existing *Featured project* flag. Selection is saved as `fields.featuredImageUrl`, which must match the project cover or a gallery URL. Reordering retains the selection; removing a selected gallery image returns to the cover. The featured image and its saved alt text appear at the top of the details and in default project social metadata.
+
+The overview loads thumbnail textures only. Opening details loads the full featured texture on demand in a scene-owned cache; stale navigation responses cannot replace the current project's artwork. Textures are reused and disposed with the scene. The native fallback uses the same featured image. Existing records without these fields continue to display their cover; editing/saving an older project now requires setting a thumbnail URL.
+
+Deploy frontend and backend together. These properties live in the existing project JSON fields; no SQL migration or image backfill is required. The API rejects unsafe/missing thumbnails and featured URLs outside the project's own cover/gallery. See `Backend/examples/project.json` and the `ProjectWrite` OpenAPI schema for the write contract.
+
 Public project pages now use the Rust API's `/api/v1/projects` archive and `/api/v1/projects/:slug` detail endpoints through TanStack Start server functions. Only database projects that are published, due and not deleted appear. There is no seeded-project fallback when the API is empty, unavailable or returns 404. The existing private `PORTFOLIO_API_URL` must point to the running backend.
 
 The archive is paginated and cached under `public-projects`. Create, update, publication, unpublication and delete mutations invalidate that namespace. Project routes fetch fresh queries on entry; active queries also refresh on window focus. The detail endpoint supplies saved narrative fields, cover alt text, gallery media and SEO. Search and service-related project links use the same public archive. The optional homepage work section uses it when mounted; no new homepage section is introduced.
@@ -42,7 +52,9 @@ Run `npm run dev` in `adnan-portfolio-frontend`, then visit `/projects`.
 
 `/projects/:slug` keeps the existing portfolio URLs and SEO metadata. The overview, project detail, next-project and browser-history transitions reuse one canvas and audio controller. Leaving the project routes disposes the renderer, event listeners and audio. The regular portfolio navbar/footer and Lenis are not mounted around the fullscreen terrain routes; other routes are unchanged.
 
-Project content, images, technologies, features and external links still come from `src/data/projects.ts`. `project-data.ts` adapts those entries into six terrain beacons. GPU artwork needs CORS-enabled image sources; a neutral local terrain texture keeps previews usable if loading fails or exceeds six seconds. Large images and gallery media render natively in HTML, and no external game artwork is substituted for a portfolio project.
+Published project content comes from the public API, with `project-data.ts` adapting those records into terrain beacons. Overview artwork uses the project's thumbnail; the details hero loads its selected featured image on demand. GPU artwork needs CORS-enabled image sources. Hero HTML images and shader textures both request anonymous CORS; a denied texture leaves the ordinary image visible and keeps its pixels out of WebGL. Failed requests can retry on reopening the project. A neutral local terrain texture remains the overview preview fallback. Large images and gallery media render natively in HTML, and no external game artwork is substituted for a portfolio project.
+
+For R2 custom domains, allow `GET`/`HEAD` from the website origin on the public image bucket, and purge cached images after changing that policy. Inspect the final image response with the website's `Origin` header; the response must be successful and include a matching `Access-Control-Allow-Origin`. Bucket CORS alone cannot fix a failing object request or headers stripped by another CDN/redirect. The native fallback preserves the image while an effect cannot load; it does not bypass browser CORS.
 
 ## Controls and sound
 
@@ -84,7 +96,7 @@ These are example paths, not bundled media. The cover image is always included a
 
 ## Checks and publishing
 
-Run `npm run test`, `bun run test:unit`, `bun run test:projects:browser`, and `npm run build`. The terrain-specific unit tests are in `tests/terrain-projects.test.ts`. The project artwork browser fixture renders the real Three.js output/artwork passes and checks exact source RGB (including neutral gray) under different background exposures, native small-image texture color, widened organic/circular mask coverage, and WebGL errors. Add `--native-gpu` to the browser test command to exercise the available hardware GPU rather than SwiftShader.
+Run `npm run test`, `bun run test:unit`, `bun run test:projects:browser`, `bun run test:projects:cors`, and `npm run build`. The terrain-specific unit tests are in `tests/terrain-projects.test.ts`. The project artwork browser fixture renders the real Three.js output/artwork passes and checks exact source RGB (including neutral gray) under different background exposures, native small-image texture color, widened organic/circular mask coverage, and WebGL errors. The CORS browser fixture uses separate origins to verify approved textures, denied-texture native fallback and retry after recovery. Add `--native-gpu` to the artwork browser test command to exercise the available hardware GPU rather than SwiftShader.
 
 Neutral-image/wider-frame verification: 180 unit tests passed with a 20-second per-test timeout, along with TypeScript and the production build. All 13 artwork browser checks passed with SwiftShader and native NVIDIA WebGL2; source RGB round-trips matched exactly. The expanded organic and circular masks covered approximately 67.6% and 55.8% of the test frame. The live terrain-page smoke check measured the expected desktop widths but remained in its loading/opening state, so full-page visual acceptance was not completed. Separate shader files being added during verification were left untouched.
 

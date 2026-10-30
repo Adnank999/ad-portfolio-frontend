@@ -3,14 +3,17 @@ import type { Project } from '@/data/projects'
 export type ProjectRecord = Pick<Project, 'id' | 'slug' | 'title' | 'description' | 'image' | 'category' | 'year' | 'technologies' | 'githubUrl' | 'liveUrl' | 'featured'> & Partial<Project> & {
   imageAlt: string
   gallery?: { url: string; alt: string; caption?: string }[]
-  seo?: { title?: string; description?: string; canonicalUrl?: string; socialImage?: string; noIndex?: boolean }
+  seo?: { title?: string; description?: string; canonicalUrl?: string; socialImage?: string; ogImage?: string; noIndex?: boolean }
 }
 
 // The public archive intentionally omits long narrative fields; detail requests supply them.
 export function projectFromRecord(record: ProjectRecord): Project {
   return {
     id: record.id, slug: record.slug, title: record.title, description: record.description,
-    image: record.image, imageAlt: record.imageAlt, category: record.category, year: record.year,
+    image: record.image, imageAlt: record.imageAlt, thumbnailUrl: record.thumbnailUrl || record.image,
+    featuredImageUrl: record.featuredImageUrl || record.image,
+    featuredImageAlt: (record.gallery ?? []).find(image => image.url === record.featuredImageUrl)?.alt || record.imageAlt,
+    category: record.category, year: record.year,
     technologies: record.technologies ?? [], githubUrl: record.githubUrl ?? '', liveUrl: record.liveUrl ?? '', featured: record.featured ?? false,
     overview: record.overview ?? '', problem: record.problem ?? '', solution: record.solution ?? '',
     features: record.features ?? [], technical: record.technical ?? '', challenges: record.challenges ?? '', results: record.results ?? '',

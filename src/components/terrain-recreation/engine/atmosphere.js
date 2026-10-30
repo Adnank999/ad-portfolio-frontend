@@ -5,6 +5,7 @@ import { WATER_LEVEL } from './water.js';
 import { findTerrainCrest } from './terrain.js';
 import { createStormSky } from './storm-sky.js';
 import { configureSurfaceTexture } from './texture-quality.js';
+import { createProjectTextureCache } from './project-textures.js';
 
 // The geometry is intentionally owned by scene.js. This module only adds
 // weather, energy markers, responsive hotspots, and shader-based project art.
@@ -221,22 +222,19 @@ export async function createAtmosphere({scene,camera,renderer,host,heightAt,rive
   const [noise,panorama,fallback]=await Promise.all([
     texLoad(loader,imageBase+'perlin.webp'),texLoad(loader,imageBase+'bg.webp'),
     texLoad(loader,imageBase+'terrain-diffuse.webp')]);
-  const projectImages=await Promise.all(MARKERS.map(project=>new Promise(resolve=>{
-    let finished=false;
-    const timer=setTimeout(()=>{finished=true;resolve(fallback);},6000);
-    loader.load(project.imageUrl,texture=>{
-      if(finished){texture.dispose();return;}
-      finished=true;clearTimeout(timer);resolve(texture);
-    },undefined,()=>{if(!finished){finished=true;clearTimeout(timer);resolve(fallback);}});
-  })));
+  const projectTextures=createProjectTextureCache({loader,fallback,configure:texture=>{
+    texture.colorSpace=THREE.SRGBColorSpace;
+    configureSurfaceTexture(texture,Math.min(8,renderer.capabilities.getMaxAnisotropy()));
+  }});
+  const projectImages=await Promise.all(MARKERS.map(project=>projectTextures.load(project.imageUrl)));
   const artwork=new Map(MARKERS.map((project,index)=>[project.id,projectImages[index]]));
   panorama.colorSpace=fallback.colorSpace=THREE.SRGBColorSpace;
-  for(const texture of [panorama,...projectImages]){
+  for(const texture of [panorama]){
     texture.colorSpace=THREE.SRGBColorSpace;
     configureSurfaceTexture(texture,Math.min(8,renderer.capabilities.getMaxAnisotropy()));
   }
   noise.wrapS=noise.wrapT=THREE.RepeatWrapping;
-  const group=new THREE.Group();scene.add(group);const resources=[...new Set([noise,panorama,fallback,...projectImages])];
+  const group=new THREE.Group();scene.add(group);const resources=[...new Set([noise,panorama,fallback])];
   const glowTex=softTexture();resources.push(glowTex);
   const rain=rainField(), splashes=splashField(riverMask);group.add(rain.object,splashes.object);
   onRiver?.(splashes.object);
@@ -448,14 +446,15 @@ export async function createAtmosphere({scene,camera,renderer,host,heightAt,rive
   return {
     sky,
     update,updateStorm,flash:()=>stormFlash(1,true),select:(id,options)=>select(markers.find(m=>m.id===id)||markers[0],options),close,
-    getProjectArtwork:id=>artwork.get(id)||fallback,
+    getProjectArtwork:(id,url)=>url?(projectTextures.peek(url)||fallback):(artwork.get(id)||fallback),
+    loadProjectArtwork:(_id,url)=>projectTextures.load(url).then(texture=>projectTextures.peek(url)===texture?texture:null),
     getProjectNoise:()=>noise,
     getSelectedProject:()=>selected?.id??null,
     setShowcaseActive(value){portalUI.caption.inert=Boolean(value);portalUI.caption.setAttribute('aria-hidden',String(Boolean(value)));},
     getSelectedAnchor:()=>selected?.anchor??null,
     setSetting(key,value){if(key in settings){settings[key]=typeof settings[key]==='boolean'?Boolean(value):Number(value);return true;}return false;},
     getSettings:()=>({...settings}),
-    dispose(){destroyed=true;
+    dispose(){destroyed=true;projectTextures.dispose();
       renderer.domElement.removeEventListener('pointermove',pointerMove);
       renderer.domElement.removeEventListener('pointerleave',pointerLeave);
       renderer.domElement.removeEventListener('click',localClick);
