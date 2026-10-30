@@ -369,6 +369,7 @@ export async function mountTerrain(host,opts={}){
     projectPage=createProjectPage({host,pass:showcasePass,projects:MARKERS,imageBase:ASSET,base:import.meta.env?.BASE_URL||'/',reducedMotion,onNavigate:opts.onNavigate,
       noise:atmosphere.getProjectNoise(),getArtwork:(id,url)=>atmosphere.getProjectArtwork(id,url),
       loadArtwork:(id,url)=>atmosphere.loadProjectArtwork(id,url),
+      onOpenGallery:opts.onOpenGallery,
       onProject:id=>{if(atmosphere.getSelectedProject()!==id)atmosphere.select(id,{silent:true});},
       onActive:value=>{atmosphere.setShowcaseActive(value);audio.setDetailMode(value);if(value)dragging=false;},
       onImageHover:()=>{void audio.playHover();}

@@ -10,7 +10,7 @@ export function getImageScrollReveal(rectangle, height, reducedMotion = false) {
 }
 
 export function createProjectPage({ host, pass, getArtwork, loadArtwork, noise, imageBase, projects = [], base = '/', reducedMotion = false,
-  onProject = () => {}, onActive = () => {}, onImageHover = () => {}, onNavigate = null, eventTarget = window, documentTarget = document }) {
+  onProject = () => {}, onActive = () => {}, onImageHover = () => {}, onOpenGallery = () => {}, onNavigate = null, eventTarget = window, documentTarget = document }) {
   const catalog = createProjectCatalog(projects);
   const { getProject, getNextProject, projectFromPath } = catalog;
   const root = documentTarget.createElement('article');
@@ -88,7 +88,7 @@ export function createProjectPage({ host, pass, getArtwork, loadArtwork, noise, 
       const item = documentTarget.createElement('li'); item.textContent = feature;
       root.querySelector('.case-features').append(item);
     }
-    for (const [label, href] of [['Live project', project.liveUrl], ['Source code', project.githubUrl]]) {
+    for (const [label, href] of [['Source code', project.githubUrl]]) {
       if (!href || !/^(https?:\/\/|\/(?!\/))/.test(href)) continue;
       const link = documentTarget.createElement('a'); link.textContent = label; link.href = href;
       link.target = '_blank'; link.rel = 'noopener noreferrer'; root.querySelector('.case-project-links').append(link);
@@ -134,7 +134,12 @@ export function createProjectPage({ host, pass, getArtwork, loadArtwork, noise, 
       const figure = documentTarget.createElement('figure'); figure.className = 'case-media';
       const small = item.type === 'image' && item.layout === 'small';
       figure.dataset.layout = small ? 'small' : 'large';
-      const frame = documentTarget.createElement('div'); frame.className = 'case-media-art';
+      const frame = documentTarget.createElement(item.type === 'image' ? 'button' : 'div'); frame.className = 'case-media-art';
+      if (item.type === 'image') {
+        frame.type = 'button'; frame.classList.add('case-media-preview'); frame.dataset.gallerySrc = item.src;
+        frame.setAttribute('aria-haspopup', 'dialog');
+        frame.setAttribute('aria-label', `Open image ${index + 1} in gallery: ${item.alt}`);
+      }
       if (small) {
         frame.dataset.imageEffect = `media:${index}`;
         smallImages.push({ id: frame.dataset.imageEffect, element: frame });
@@ -255,8 +260,11 @@ export function createProjectPage({ host, pass, getArtwork, loadArtwork, noise, 
     if (!root.inert && !event.defaultPrevented && event.key === 'Escape' && !event.repeat && pass.transition.getState().active) { event.preventDefault(); overview(); }
   }
   function onClick(event) {
+    if (root.inert || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const preview = event.target.closest('button[data-gallery-src]');
+    if (preview) { event.preventDefault(); onOpenGallery(current.id, preview.dataset.gallerySrc, preview); return; }
     const link = event.target.closest('a[data-action]');
-    if (!link || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (!link) return;
     event.preventDefault();
     if (link.dataset.action === 'overview') overview(); else open(getNextProject(current.id).id);
   }

@@ -23,7 +23,8 @@
     "test:home:browser": "bun ./tests/browser/run-image-conversion.mjs --home-shader",
     "test:shaders:installed": "bun ./tests/browser/run-image-conversion.mjs --installed-shaders",
     "test:projects:browser": "bun ./tests/browser/run-image-conversion.mjs --project-artwork",
-    "test:projects:cors": "bun ./tests/browser/run-image-conversion.mjs --project-cors"
+    "test:projects:cors": "bun ./tests/browser/run-image-conversion.mjs --project-cors",
+    "test:projects:layout": "bun ./tests/browser/run-image-conversion.mjs --project-layout"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "latest",

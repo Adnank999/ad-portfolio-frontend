@@ -1351,18 +1351,21 @@
 }
 :where(.terrain-experience) .case-art[data-render-mode="native"] .case-hero-image { opacity: 1; }
 :where(.terrain-experience) .case-media-list {
-  width: 100vw;
-  position: relative;
-  left: 50%;
-  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(24px, 3vw, 40px);
+  width: 100%;
+  margin: 0 0 clamp(48px, 8vh, 96px);
 }
 :where(.terrain-experience) .case-media {
   display: grid;
   grid-template-columns: 7fr 3fr;
   align-items: center;
+  grid-column: 1 / -1;
+  min-width: 0;
   width: 100%;
   gap: 0;
-  margin: 6vh 0 12vh;
+  margin: 0;
 }
 :where(.terrain-experience) .case-media .case-image {
   width: 100%;
@@ -1442,17 +1445,41 @@
   font-weight: 700;
 }
 :where(.terrain-experience) .case-media-art { min-width: 0; }
+:where(.terrain-experience) .case-media-preview {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+:where(.terrain-experience) .case-media-preview:focus-visible { outline: 2px solid #b4f4ff; outline-offset: 4px; }
 :where(.terrain-experience) .case-media[data-layout="large"] {
   display: block;
-  width: min(92vw, 1600px);
-  margin: 6vh auto 12vh;
+  grid-column: auto;
+  width: 100%;
+  margin: 0;
 }
 :where(.terrain-experience) .case-media[data-layout="large"] .case-media-art {
+  aspect-ratio: 16 / 10;
   overflow: hidden;
-  border-radius: 14px;
+  border: 1px solid #b6cbd726;
+  border-radius: 12px;
+  background: #080e17;
 }
-:where(.terrain-experience) .case-media[data-layout="large"] figcaption { padding: 18px 0; text-align: center; }
-:where(.terrain-experience) .case-media[data-layout="large"] figcaption p { margin: 8px 0 0; font-size: 13px; }
+:where(.terrain-experience) .case-media[data-layout="large"] .case-image,
+:where(.terrain-experience) .case-media[data-layout="large"] .case-video {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
+  object-position: center top;
+}
+:where(.terrain-experience) .case-media[data-layout="large"] figcaption { padding: 16px 0 0; text-align: left; letter-spacing: normal; overflow-wrap: anywhere; }
+:where(.terrain-experience) .case-media[data-layout="large"] figcaption > span { font-size: 10px; letter-spacing: .12em; }
+:where(.terrain-experience) .case-media[data-layout="large"] figcaption p { margin: 8px 0 0; font-size: 13px; line-height: 1.65; }
+:where(.terrain-experience) .case-media[data-layout="large"] .case-media-art,
+:where(.terrain-experience) .case-media[data-layout="large"] figcaption { grid-column: auto; grid-row: auto; }
 :where(.terrain-experience) .case-video { display: block; width: 100%; max-height: 80vh; background: #080e17; }
 :where(.terrain-experience) .case-media[data-layout="small"] .case-media-art {
   aspect-ratio: 1;
@@ -1500,17 +1527,18 @@
   :where(.terrain-experience) .case-media,
   :where(.terrain-experience) .case-media:nth-child(even) {
     grid-template-columns: 1fr;
-    margin: 4vh 0 8vh;
+    margin: 0;
   }
+  :where(.terrain-experience) .case-media-list { grid-template-columns: minmax(0, 1fr); gap: 32px; }
   :where(.terrain-experience) .case-media .case-image,
   :where(.terrain-experience) .case-media .case-media-art,
   :where(.terrain-experience) .case-media:nth-child(even) .case-media-art {
     grid-column: 1;
     grid-row: 1;
-    width: 94vw;
+    width: 100%;
     margin: auto;
   }
-  :where(.terrain-experience) .case-media[data-layout="large"] { width: 94vw; }
+  :where(.terrain-experience) .case-media[data-layout="large"] { width: 100%; }
   :where(.terrain-experience) .case-media[data-layout="large"] .case-media-art,
   :where(.terrain-experience) .case-media[data-layout="large"] .case-image { width: 100%; }
   :where(.terrain-experience) .case-media figcaption,
@@ -1523,6 +1551,8 @@
     font-size: 23px;
     margin-top: 10px;
   }
+  :where(.terrain-experience) .case-media[data-layout="large"] figcaption { padding: 14px 0 0; }
+  :where(.terrain-experience) .case-media[data-layout="large"] figcaption p { font-size: 13px; margin-top: 8px; }
   :where(.terrain-experience) .case-next-art {
     width: 92vw;
   }

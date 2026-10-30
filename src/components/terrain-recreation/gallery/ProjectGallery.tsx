@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { ArrowLeft, ArrowRight, Grid2X2, Play, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ExternalLink, Grid2X2, Play, X } from 'lucide-react'
 import type { Project, ProjectMedia } from '../../../data/projects'
-import { getProjectMedia, type GalleryLauncherLayout } from './project-media'
+import { getProjectMedia, isMediaSource, type GalleryLauncherLayout, type GalleryOpenRequest } from './project-media'
 import './gallery.css'
 
 type ProjectGalleryProps = {
@@ -10,6 +10,7 @@ type ProjectGalleryProps = {
   ready: boolean
   onActive: (active: boolean) => void
   onLauncherLayout: (layout: GalleryLauncherLayout | null) => void
+  openRequest?: GalleryOpenRequest | null
 }
 
 function GallerySlide({ item }: { item: ProjectMedia }) {
@@ -28,17 +29,33 @@ function GallerySlide({ item }: { item: ProjectMedia }) {
   </div>
 }
 
-export default function ProjectGallery({ project, ready, onActive, onLauncherLayout }: ProjectGalleryProps) {
+export default function ProjectGallery({ project, ready, onActive, onLauncherLayout, openRequest = null }: ProjectGalleryProps) {
   const media = useMemo(() => getProjectMedia(project), [project])
   const [open, setOpen] = useState(false)
+  const openState = useRef(false)
   const [index, setIndex] = useState(0)
   const launcher = useRef<HTMLButtonElement>(null)
   const thumbnails = useRef<HTMLDivElement>(null)
   const hovered = useRef(false)
+  const handledRequest = useRef<GalleryOpenRequest | null>(null)
+  const returnFocus = useRef<HTMLElement | null>(null)
   const swipe = useRef<{ x: number; y: number } | null>(null)
   const current = media[index]
-  const changeOpen = (value: boolean) => { setOpen(value); onActive(value) }
+  const liveUrl = isMediaSource(project.liveUrl) ? project.liveUrl : undefined
+  const changeOpen = (value: boolean) => { openState.current = value; setOpen(value); onActive(value) }
   const move = (offset: number) => setIndex(value => (value + offset + media.length) % media.length)
+
+  useEffect(() => {
+    if (!ready || !openRequest || handledRequest.current === openRequest || openRequest.projectSlug !== project.slug) return
+    const selected = media.findIndex(item => item.src === openRequest.src)
+    if (selected < 0) return
+    handledRequest.current = openRequest
+    returnFocus.current = openRequest.trigger
+    openState.current = true
+    setIndex(selected)
+    setOpen(true)
+    onActive(true)
+  }, [openRequest, ready, project.slug, media, onActive])
 
   useEffect(() => {
     const measure = () => {
@@ -62,7 +79,7 @@ export default function ProjectGallery({ project, ready, onActive, onLauncherLay
       element?.removeEventListener('focus', enter); element?.removeEventListener('blur', leave)
       onLauncherLayout(null)
     }
-  }, [ready, onLauncherLayout])
+  }, [ready, onLauncherLayout, liveUrl])
 
   useEffect(() => () => onActive(false), [onActive])
 
@@ -75,14 +92,25 @@ export default function ProjectGallery({ project, ready, onActive, onLauncherLay
 
   if (!current) return null
   return <Dialog.Root open={open} onOpenChange={changeOpen}>
-    <Dialog.Trigger asChild>
-      <button ref={launcher} type="button" className="terrain-gallery-launcher" data-ready={ready} disabled={!ready} aria-label={`Open media gallery for ${project.title}`} title="Open media gallery">
-        <Grid2X2 size={23} aria-hidden="true" /><span className="terrain-gallery-launcher-label">EXPLORE THE PROJECT<span>{media.length} {media.length === 1 ? 'ASSET' : 'ASSETS'}</span></span>
-      </button>
-    </Dialog.Trigger>
+    <div className="terrain-project-actions" role="group" aria-label="Project actions">
+      {liveUrl && <a className="terrain-project-action terrain-live-launcher" href={liveUrl} target="_blank" rel="noopener noreferrer" aria-label={`Visit live project: ${project.title} (opens in a new tab)`} title="Visit live project (opens in a new tab)">
+        <ExternalLink size={23} aria-hidden="true" /><span className="terrain-gallery-launcher-label">LIVE PROJECT<span>OPEN WEBSITE</span></span>
+      </a>}
+      <Dialog.Trigger asChild>
+        <button ref={launcher} type="button" className="terrain-project-action terrain-gallery-launcher" data-ready={ready} disabled={!ready} onClick={() => { returnFocus.current = null }} aria-label={`Open media gallery for ${project.title}`} title="Open media gallery">
+          <Grid2X2 size={23} aria-hidden="true" /><span className="terrain-gallery-launcher-label">EXPLORE THE PROJECT<span>{media.length} {media.length === 1 ? 'ASSET' : 'ASSETS'}</span></span>
+        </button>
+      </Dialog.Trigger>
+    </div>
     <Dialog.Portal>
       <Dialog.Overlay className="terrain-gallery-overlay" />
-      <Dialog.Content className="terrain-gallery" onEscapeKeyDown={event => event.stopPropagation()} onKeyDown={event => {
+      <Dialog.Content className="terrain-gallery" onCloseAutoFocus={event => {
+        // A previous dialog may finish closing after another preview has opened it again.
+        if (openState.current) { event.preventDefault(); return }
+        const trigger = returnFocus.current
+        returnFocus.current = null
+        if (trigger?.isConnected) { event.preventDefault(); trigger.focus({ preventScroll: true }) }
+      }} onEscapeKeyDown={event => event.stopPropagation()} onKeyDown={event => {
         if (event.defaultPrevented || (event.target as HTMLElement).closest('video,input,textarea,select')) return
         if (event.key === 'ArrowRight') { event.preventDefault(); move(1) }
         if (event.key === 'ArrowLeft') { event.preventDefault(); move(-1) }

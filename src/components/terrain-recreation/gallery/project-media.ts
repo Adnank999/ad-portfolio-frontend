@@ -28,3 +28,9 @@ export type GalleryLauncherLayout = {
   height: number
   hovered: boolean
 }
+
+export type GalleryOpenRequest = {
+  projectSlug: string
+  src: string
+  trigger: HTMLElement
+}

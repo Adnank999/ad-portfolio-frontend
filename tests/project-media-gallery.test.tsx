@@ -15,6 +15,45 @@ const project: Project = {
 }
 
 describe('project media gallery', () => {
+  test('opens the requested image, restores preview focus and can reopen the same selection', async () => {
+    const preview = document.createElement('button')
+    document.body.append(preview)
+    const onActive = mock((_active: boolean) => {})
+    const onLauncherLayout = () => {}
+    const view = render(<ProjectGallery project={project} ready onActive={onActive} onLauncherLayout={onLauncherLayout} />)
+    const openPreview = () => view.rerender(<ProjectGallery project={project} ready onActive={onActive} onLauncherLayout={onLauncherLayout} openRequest={{ projectSlug: project.slug, src: '/media/detail.webp', trigger: preview }} />)
+    for (let attempt = 0; attempt < 2; attempt++) {
+      openPreview()
+      const dialog = await screen.findByRole('dialog')
+      expect(within(dialog).getByAltText('Booking interface').getAttribute('src')).toBe('/media/detail.webp')
+      expect(within(dialog).getByRole('button', { name: /View image 2/ }).getAttribute('aria-pressed')).toBe('true')
+      expect(onActive).toHaveBeenLastCalledWith(true)
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Next media' }))
+      expect(dialog.querySelector('video')).not.toBeNull()
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Close media gallery' }))
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+      expect(onActive).toHaveBeenLastCalledWith(false)
+      await waitFor(() => expect(document.activeElement).toBe(preview))
+    }
+    view.rerender(<ProjectGallery project={project} ready onActive={onActive} onLauncherLayout={onLauncherLayout} openRequest={{ projectSlug: 'another-project', src: '/media/detail.webp', trigger: preview }} />)
+    expect(screen.queryByRole('dialog')).toBeNull()
+    view.rerender(<ProjectGallery project={project} ready onActive={onActive} onLauncherLayout={onLauncherLayout} openRequest={{ projectSlug: project.slug, src: '/unrelated.webp', trigger: preview }} />)
+    expect(screen.queryByRole('dialog')).toBeNull()
+    preview.remove()
+  })
+
+  test('keeps the live website beside the gallery with a safe, accessible external link', () => {
+    const view = render(<ProjectGallery project={{ ...project, liveUrl: 'https://example.com/booking' }} ready onActive={() => {}} onLauncherLayout={() => {}} />)
+    const actions = screen.getByRole('group', { name: 'Project actions' })
+    const live = within(actions).getByRole('link', { name: `Visit live project: ${project.title} (opens in a new tab)` })
+    expect(live.getAttribute('href')).toBe('https://example.com/booking')
+    expect(live.getAttribute('target')).toBe('_blank')
+    expect(live.getAttribute('rel')).toBe('noopener noreferrer')
+    expect(within(actions).getByRole('button', { name: /open media gallery/i })).toBeDefined()
+    view.rerender(<ProjectGallery project={{ ...project, liveUrl: 'javascript:alert(1)' }} ready onActive={() => {}} onLauncherLayout={() => {}} />)
+    expect(within(actions).queryByRole('link')).toBeNull()
+  })
+
   test('uses all real project media, removes duplicates and rejects unsafe URLs', () => {
     expect(getProjectMedia(project).map(item => item.type)).toEqual(['image', 'image', 'video'])
     const media = getProjectMedia({ ...project, media: [

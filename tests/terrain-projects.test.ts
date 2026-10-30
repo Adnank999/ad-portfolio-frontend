@@ -50,7 +50,7 @@ describe('terrain project integration', () => {
     expect(declarations(':where(.terrain-experience) .case-art')['max-height']).toBe('84vh')
     expect(declarations(':where(.terrain-experience) .case-art', true).width).toBe('94vw')
     expect(declarations(':where(.terrain-experience) .case-media')['grid-template-columns']).toBe('7fr 3fr')
-    expect(declarations(':where(.terrain-experience) .case-media[data-layout="large"]').width).toBe('min(92vw, 1600px)')
+    expect(declarations(':where(.terrain-experience) .case-media[data-layout="large"]').width).toBe('100%')
     const fallback = declarations(':where(.terrain-experience) .case-media[data-layout="small"] .case-image')
     expect(parseFloat(fallback['mask-size'])).toBeCloseTo(100 / PROJECT_ARTWORK_DEFAULTS.maskScale, 1)
     expect(fallback['mask-position']).toBe('center')
@@ -96,6 +96,7 @@ describe('terrain project integration', () => {
     const href = window.location.href
     const navigate = mock((_slug: string | null) => {})
     const onActive = mock((_active: boolean) => {})
+    const onOpenGallery = mock((_slug: string, _src: string, _trigger: HTMLElement) => {})
     let active = false
     const artwork = document.createElement('img')
     artwork.src = '/terrain/assets/bg.webp'; artwork.width = 1600; artwork.height = 900
@@ -109,7 +110,7 @@ describe('terrain project integration', () => {
       setImageVisibility: mock(() => {}), setMediaLayout: mock(() => {}), setMediaImage: mock(() => {}),
     }
     const page = createProjectPage({ host, pass, projects: terrainProjects, getArtwork: () => ({ image: artwork }), noise: {},
-      imageBase: '/terrain/assets/', reducedMotion: true, onNavigate: navigate, onActive })
+      imageBase: '/terrain/assets/', reducedMotion: true, onNavigate: navigate, onActive, onOpenGallery })
     expect(window.history.state).toBe(historyState)
     const first = terrainProjects[0], second = terrainProjects[1]
     page.open(first.id)
@@ -122,6 +123,11 @@ describe('terrain project integration', () => {
     expect(host.textContent).toContain(first.year)
     expect(host.querySelectorAll('.case-features li')).toHaveLength(first.features.length)
     expect(host.querySelector('.case-media')?.getAttribute('data-layout')).toBe('large')
+    const preview = host.querySelector<HTMLButtonElement>('.case-media-preview')!
+    expect(preview.tagName).toBe('BUTTON')
+    expect(preview.getAttribute('aria-haspopup')).toBe('dialog')
+    preview.querySelector('img')!.click()
+    expect(onOpenGallery).toHaveBeenLastCalledWith(first.id, first.image, preview)
     expect(host.querySelector('.case-art')?.getAttribute('data-image-effect')).toBe('hero')
     expect(host.querySelectorAll('a[href="#"]')).toHaveLength(0)
     expect(document.title).toBe('Router-owned title')

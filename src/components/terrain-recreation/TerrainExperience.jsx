@@ -97,6 +97,7 @@ export default function TerrainExperience({projects,project=null,projectSlug=nul
   const tabBar=useRef(null);
   const route=useRef({projectSlug,project,onNavigate,onStateChange});
   const [ready,setReady]=useState(false);
+  const [galleryRequest,setGalleryRequest]=useState(null);
   const [audio,setAudio]=useState({enabled:true,status:'blocked'});
   const [settings,setSettings]=useState({...DEFAULT_SETTINGS});
   const [performance,setPerformance]=useState(null);
@@ -105,12 +106,14 @@ export default function TerrainExperience({projects,project=null,projectSlug=nul
   const [topdown,setTopdown]=useState(false),[auto,setAuto]=useState(true);
   const onGalleryActive=useCallback(active=>{galleryActive.current=active;api.current?.setGalleryActive(active);},[]);
   const onLauncherLayout=useCallback(layout=>api.current?.setGalleryLauncher(layout),[]);
+  const onOpenGallery=useCallback((slug,src,trigger)=>setGalleryRequest({projectSlug:slug,src,trigger}),[]);
   useEffect(()=>{
     route.current={projectSlug,project,onNavigate,onStateChange};
     api.current?.syncRoute(projectSlug,project);
   },[projectSlug,project,onNavigate,onStateChange]);
   useEffect(()=>{
     setControlsOpen(false);
+    setGalleryRequest(null);
     setTab(projectSlug?'BACKGROUND':'WEATHER');
   },[projectSlug]);
   useEffect(()=>{
@@ -127,6 +130,7 @@ export default function TerrainExperience({projects,project=null,projectSlug=nul
       projectSlug:route.current.projectSlug,
       onAudioState:state=>{if(!cancelled)setAudio(state);},
       onNavigate:slug=>route.current.onNavigate(slug),
+      onOpenGallery,
       onError:()=>{if(!cancelled){route.current.onStateChange('error');api.current?.destroy();}},
       onSetting:(key,value)=>{if(!cancelled)setSettings(s=>({...s,[key]:value}));},
       onPerformance:stats=>{if(!cancelled)setPerformance(stats);}
@@ -135,7 +139,7 @@ export default function TerrainExperience({projects,project=null,projectSlug=nul
       else {handle=scene;api.current=scene;scene.syncRoute(route.current.projectSlug,route.current.project);setReady(true);route.current.onStateChange('ready');}
     }).catch(err=>{if(!cancelled&&err.name!=='AbortError'){console.error('[storm terrain]',err);route.current.onStateChange('error');}});
     return ()=>{cancelled=true;controller.abort();handle?.destroy();api.current=null;};
-  },[MARKERS]);
+  },[MARKERS,onOpenGallery]);
   const set=(key,value)=>{const parsed=typeof DEFAULT_SETTINGS[key]==='boolean'?Boolean(value):Number(value);
     setSettings(s=>({...s,[key]:parsed}));api.current?.setSetting(key,parsed);};
   const preset=(name)=>{
@@ -181,7 +185,7 @@ export default function TerrainExperience({projects,project=null,projectSlug=nul
         ENTER THE WORLD <span>↗</span>
       </button>
     </section>
-    {project&&<Suspense fallback={null}><ProjectGallery key={project.slug} project={project} ready={ready} onActive={onGalleryActive} onLauncherLayout={onLauncherLayout}/></Suspense>}
+    {project&&<Suspense fallback={null}><ProjectGallery key={project.slug} project={project} ready={ready} openRequest={galleryRequest} onActive={onGalleryActive} onLauncherLayout={onLauncherLayout}/></Suspense>}
     {SHOW_BACKGROUND_BUTTON&&project&&!controlsOpen&&<button className="project-background-controls" aria-label="Project background controls" aria-controls="terrain-storm-controls" aria-expanded={false} onClick={()=>{setTab('BACKGROUND');setControlsOpen(true);}}>BACKGROUND</button>}
     {controlsOpen&&<aside id="terrain-storm-controls" className="control-dock open" aria-label="Storm laboratory">
       <div className="dock-header"><div><div className="dock-eyebrow">REAL-TIME RENDER LAB</div><strong>Storm controls · V5.3</strong></div>
